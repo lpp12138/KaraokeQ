@@ -60,37 +60,40 @@
       sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
     ></iframe>
 
-    <!-- iframe management bar: only shown when bilibili/iframe content is playing -->
-    <div id="iframe-mgmt-bar" hidden>
-      <div class="overlay-room-badge">
-        <span class="room-label" data-i18n="display.roomCode">Room</span>
-        <span class="room-val" id="room-code-iframe"></span>
-      </div>
-      <div style="flex:1;min-width:.25rem;"></div>
-      <button class="overlay-top-btn" id="btn-danmaku" hidden>弹幕 ON</button>
-      <button class="overlay-top-btn" id="btn-native">↗ 原网页</button>
-      <button class="overlay-top-btn" id="btn-queue-iframe">
-        <span data-i18n="display.queue">队列</span>
-        <span id="queue-count-iframe" class="queue-count-badge" style="margin-left:.3rem;">0</span>
-      </button>
-      <button class="overlay-top-btn" id="btn-qr-iframe">QR</button>
-    </div>
+    <!-- Single floating control button — shows queue count, auto-hides on inactivity -->
+    <button id="fab-ctrl" aria-label="控制菜单" aria-expanded="false">
+      <span id="fab-queue-count">0</span>
+    </button>
 
-    <!-- Overlay controls: only shown for youtube/video/audio content -->
-    <div id="overlay-controls" hidden>
+    <!-- Expandable control panel — appears above FAB on click -->
+    <div id="ctrl-panel">
 
-      <div class="overlay-top">
+      <!-- Header: room code + action buttons -->
+      <div class="ctrl-row ctrl-header">
         <div class="overlay-room-badge">
           <span class="room-label" data-i18n="display.roomCode">Room</span>
           <span class="room-val" id="room-code-overlay"></span>
         </div>
-        <div class="overlay-top-buttons">
-          <button class="overlay-top-btn" id="btn-qr">QR</button>
-          <button class="overlay-top-btn" id="btn-queue">
-            <span data-i18n="display.queue">Queue</span>
-            <span id="queue-count" class="queue-count-badge" style="margin-left:.3rem;">0</span>
-          </button>
-        </div>
+        <div style="flex:1"></div>
+        <button class="ctrl-btn" id="btn-danmaku" hidden>弹幕 ON</button>
+        <button class="ctrl-btn" id="btn-native" hidden>↗ 原网页</button>
+        <button class="ctrl-btn" id="btn-qr">QR</button>
+        <button class="ctrl-btn" id="btn-queue">
+          ≡ <span id="queue-count" class="ctrl-count-badge">0</span>
+        </button>
+      </div>
+
+      <!-- Now playing -->
+      <div class="ctrl-row ctrl-nowplaying" id="ctrl-nowplaying" hidden>
+        <p class="ctrl-np-label" data-i18n="display.nowPlaying">Now Playing</p>
+        <p id="now-playing-title" class="ctrl-np-title"></p>
+        <p id="now-playing-by" class="ctrl-np-by"></p>
+      </div>
+
+      <!-- Up next -->
+      <div class="ctrl-row ctrl-upnext" id="up-next-section" hidden>
+        <p class="ctrl-un-label" data-i18n="display.upNext">Up Next</p>
+        <p id="up-next-title" class="ctrl-un-title"></p>
       </div>
 
     </div>
