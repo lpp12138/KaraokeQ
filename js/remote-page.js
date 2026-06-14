@@ -230,7 +230,11 @@ const RemotePage = (() => {
 
     if (errorEl) errorEl.hidden = true;
 
-    const url = (urlInput?.value || "").trim();
+    // Normalize: expand bare BV/AV IDs, strip tracking params (spm etc.)
+    const rawInput = (urlInput?.value || "").trim();
+    const url = Utils.normalizeUrl(rawInput) || rawInput;
+    if (urlInput && url !== rawInput) urlInput.value = url;
+
     if (!url) {
       if (errorEl) {
         errorEl.textContent = I18n.t("remote.invalidUrl");
@@ -261,10 +265,14 @@ const RemotePage = (() => {
 
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = I18n.t("remote.adding"); }
 
-    // Auto-fetch title for YouTube
+    // Auto-fetch title
     if (!title && type === "youtube") {
       const vid = Utils.getYouTubeId(url);
       if (vid) title = await Utils.fetchYouTubeTitle(vid) || "";
+    }
+    if (!title && type === "bilibili") {
+      const bvid = Utils.getBilibiliId(url);
+      if (bvid && bvid.startsWith("BV")) title = await Utils.fetchBilibiliTitle(bvid) || "";
     }
 
     const song = {
@@ -299,10 +307,16 @@ const RemotePage = (() => {
     });
     document.getElementById("btn-close-add")?.addEventListener("click", _closeAddForm);
 
-    // URL input → auto-detect type
+    // URL input → auto-detect type; normalize on paste
     document.getElementById("song-url")?.addEventListener("input", _onUrlInput);
-    document.getElementById("song-url")?.addEventListener("paste", e => {
-      setTimeout(_onUrlInput.bind(null, e), 0);
+    document.getElementById("song-url")?.addEventListener("paste", () => {
+      setTimeout(() => {
+        const input = document.getElementById("song-url");
+        if (!input) return;
+        const normalized = Utils.normalizeUrl(input.value.trim());
+        if (normalized && normalized !== input.value.trim()) input.value = normalized;
+        _onUrlInput();
+      }, 0);
     });
 
     // Form submit

@@ -35,11 +35,14 @@ const Utils = (() => {
     return `${protocol}//${host}${dir}`;
   }
 
-  // Detect URL type
+  // Detect URL type — also accepts bare BV/AV IDs
   function detectUrlType(url) {
     if (!url) return "unknown";
+    const s = url.trim();
+    if (/^BV[a-zA-Z0-9]+$/i.test(s)) return "bilibili";
+    if (/^av\d+$/i.test(s)) return "bilibili";
     try {
-      const u = new URL(url.trim());
+      const u = new URL(s);
       const host = u.hostname.replace(/^www\./, "");
       if (["youtube.com", "youtu.be", "youtube-nocookie.com", "m.youtube.com"].includes(host)) return "youtube";
       if (["bilibili.com", "b23.tv", "m.bilibili.com"].includes(host)) return "bilibili";
@@ -49,6 +52,45 @@ const Utils = (() => {
       return "iframe";
     } catch {
       return "unknown";
+    }
+  }
+
+  // Normalize a pasted URL:
+  //  - Bare BV/AV ID → full bilibili.com URL
+  //  - Bilibili URL   → canonical /video/BVxxx/ (strips spm and all tracking params)
+  //  - YouTube URL    → canonical watch?v= (strips tracking params)
+  //  - Other URLs     → strip common tracking params
+  function normalizeUrl(url) {
+    if (!url) return url;
+    const s = url.trim();
+    // Bare BV ID (e.g. "BV1xx411c7mD")
+    if (/^BV[a-zA-Z0-9]+$/i.test(s)) return `https://www.bilibili.com/video/${s}/`;
+    // Bare AV ID (e.g. "av170001")
+    if (/^av\d+$/i.test(s)) return `https://www.bilibili.com/video/${s}/`;
+    try {
+      const u = new URL(s);
+      const host = u.hostname.replace(/^www\./, "");
+      // Bilibili: rebuild canonical URL, keeping only the part number (p=) if > 1
+      if (["bilibili.com", "m.bilibili.com"].includes(host)) {
+        const bvid = getBilibiliId(s);
+        if (bvid) {
+          const p = u.searchParams.get("p");
+          const query = p && p !== "1" ? `?p=${p}` : "";
+          return `https://www.bilibili.com/video/${bvid}/${query}`;
+        }
+      }
+      // YouTube: rebuild canonical watch URL
+      if (["youtube.com", "youtu.be", "youtube-nocookie.com", "m.youtube.com"].includes(host)) {
+        const vid = getYouTubeId(s);
+        if (vid) return `https://www.youtube.com/watch?v=${vid}`;
+      }
+      // Other: strip known tracking params
+      ["spm_id_from", "vd_source", "from_source", "share_source", "share_medium",
+       "bbid", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+       "unique_k"].forEach(p => u.searchParams.delete(p));
+      return u.toString();
+    } catch {
+      return s;
     }
   }
 
@@ -114,6 +156,19 @@ const Utils = (() => {
     } catch {
       return null;
     }
+  }
+
+  // Fetch Bilibili video title via public API
+  async function fetchBilibiliTitle(bvid) {
+    try {
+      const res = await fetch(
+        `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(bvid)}`,
+        { referrerPolicy: "no-referrer" }
+      );
+      const data = await res.json();
+      if (data.code === 0 && data.data?.title) return data.data.title;
+    } catch {}
+    return null;
   }
 
   // Generate YouTube thumbnail URL
@@ -222,11 +277,13 @@ const Utils = (() => {
     buildURL,
     getBaseURL,
     detectUrlType,
+    normalizeUrl,
     getYouTubeId,
     getBilibiliId,
     getBilibiliEmbedUrl,
     getNativeUrl,
     fetchYouTubeTitle,
+    fetchBilibiliTitle,
     getYouTubeThumbnail,
     uid,
     clamp,
