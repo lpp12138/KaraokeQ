@@ -27,6 +27,60 @@
   --transition:  .2s cubic-bezier(.4,0,.2,1);
   --font:        'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Component-level tokens (overridden in light mode) */
+  --range-track:    rgba(255,255,255,.15);
+  --range-thumb:    #fff;
+  --queue-divider:  rgba(255,255,255,.04);
+  --modal-backdrop: rgba(0,0,0,.60);
+
+  color-scheme: dark;
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────────── */
+/* Applied when OS prefers light AND no manual override, OR manual = light    */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:        #F6F4FF;
+    --bg2:       #EDE9FF;
+    --bg3:       #DDD6FE;
+    --card:      #FFFFFF;
+    --card2:     #F3F0FF;
+    --border:    rgba(109,40,217,.15);
+    --text:      #1E1347;
+    --text2:     #5B4C8A;
+    --text3:     #9B8FCC;
+    --shadow:    0 4px 32px rgba(60,20,180,.10);
+    --shadow-sm: 0 2px 12px rgba(60,20,180,.07);
+
+    --range-track:    rgba(0,0,0,.12);
+    --range-thumb:    var(--accent);
+    --queue-divider:  rgba(0,0,0,.06);
+    --modal-backdrop: rgba(50,20,150,.35);
+
+    color-scheme: light;
+  }
+}
+
+[data-theme="light"] {
+  --bg:        #F6F4FF;
+  --bg2:       #EDE9FF;
+  --bg3:       #DDD6FE;
+  --card:      #FFFFFF;
+  --card2:     #F3F0FF;
+  --border:    rgba(109,40,217,.15);
+  --text:      #1E1347;
+  --text2:     #5B4C8A;
+  --text3:     #9B8FCC;
+  --shadow:    0 4px 32px rgba(60,20,180,.10);
+  --shadow-sm: 0 2px 12px rgba(60,20,180,.07);
+
+  --range-track:    rgba(0,0,0,.12);
+  --range-thumb:    var(--accent);
+  --queue-divider:  rgba(0,0,0,.06);
+  --modal-backdrop: rgba(50,20,150,.35);
+
+  color-scheme: light;
 }
 
 html { height: 100%; font-size: 16px; }
@@ -280,6 +334,17 @@ small { font-size: .8rem; color: var(--text2); }
   border-color: var(--accent);
   color: var(--accent);
 }
+
+.btn-theme {
+  padding: .3rem .65rem;
+  border-radius: 99px;
+  font-size: .9rem;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  transition: all var(--transition);
+  line-height: 1;
+}
+.btn-theme:hover { background: rgba(139,92,246,.15); border-color: var(--accent); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    LANDING PAGE
@@ -782,7 +847,7 @@ small { font-size: .8rem; color: var(--text2); }
   align-items: center;
   gap: .6rem;
   padding: .65rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: 1px solid var(--queue-divider);
   transition: background var(--transition);
 }
 
@@ -1052,7 +1117,7 @@ small { font-size: .8rem; color: var(--text2); }
   align-items: center;
   gap: .6rem;
   padding: .75rem 1rem;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: 1px solid var(--queue-divider);
   transition: background var(--transition);
 }
 
@@ -1131,7 +1196,7 @@ small { font-size: .8rem; color: var(--text2); }
 #add-song-panel {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.6);
+  background: var(--modal-backdrop);
   backdrop-filter: blur(4px);
   z-index: 90;
   display: flex;

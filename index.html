@@ -2,10 +2,12 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <!-- Apply saved theme before CSS renders to avoid flash -->
+  <script>(function(){var t=localStorage.getItem('kq_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="KaraokeQ — 智能卡拉OK点歌系统">
   <meta name="theme-color" content="#8B5CF6">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
   <title>KaraokeQ</title>
   <link rel="stylesheet" href="./css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,6 +18,7 @@
 
   <header style="position:absolute;top:1rem;right:1rem;display:flex;align-items:center;gap:.75rem;">
     <div class="lang-switcher" id="lang-switcher" role="group" aria-label="Language"></div>
+    <button class="btn-theme" id="btn-theme" onclick="handleThemeToggle()" title="切换主题"></button>
   </header>
 
   <!-- Logo -->
@@ -173,6 +176,27 @@
       await I18n.load(lang);
       renderLangSwitcher();
     }
+
+    function updateThemeBtn() {
+      const btn = document.getElementById("btn-theme");
+      if (!btn) return;
+      const dark = Utils.getEffectiveTheme() === "dark";
+      btn.textContent = dark ? "☀️" : "🌙";
+      btn.title = dark ? "切换到浅色模式" : "切换到深色模式";
+    }
+
+    function handleThemeToggle() {
+      Utils.toggleTheme();
+      updateThemeBtn();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      Utils.initTheme();
+      updateThemeBtn();
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        if (!localStorage.getItem("kq_theme")) updateThemeBtn();
+      });
+    });
   </script>
 </body>
 </html>

@@ -271,6 +271,29 @@ const Utils = (() => {
     });
   }
 
+  // ─── Theme ────────────────────────────────────────────────────────────────
+
+  function getEffectiveTheme() {
+    const manual = document.documentElement.getAttribute("data-theme");
+    if (manual === "light" || manual === "dark") return manual;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem("kq_theme");
+    if (saved === "light" || saved === "dark") {
+      document.documentElement.setAttribute("data-theme", saved);
+    }
+    return getEffectiveTheme();
+  }
+
+  function toggleTheme() {
+    const next = getEffectiveTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("kq_theme", next);
+    return next;
+  }
+
   return {
     generateRoomCode,
     getRoomCodeFromURL,
@@ -292,6 +315,9 @@ const Utils = (() => {
     getRecentRooms,
     copyToClipboard,
     toast,
-    renderQRCode
+    renderQRCode,
+    getEffectiveTheme,
+    initTheme,
+    toggleTheme
   };
 })();
