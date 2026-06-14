@@ -7,12 +7,13 @@ const PlayerPage = (() => {
   let _playlist = [];
   let _state = {};
   let _currentSong = null;
-  let _currentType = null;   // active player type
+  let _currentType = null;
   let _ytPlayer = null;
   let _ytReady = false;
   let _ytPendingLoad = null;
   let _controlsTimeout = null;
   let _danmakuEnabled = true;
+  let _panelOpen = false;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -22,11 +23,8 @@ const PlayerPage = (() => {
 
     _bindControls();
 
-    // Room code display + QR
-    ["room-code", "room-code-overlay", "room-code-iframe"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = roomCode;
-    });
+    document.getElementById("room-code").textContent = roomCode;
+    document.getElementById("room-code-overlay").textContent = roomCode;
     const remoteUrl = Utils.buildURL("remote.html", roomCode);
     Utils.renderQRCode("qr-code", remoteUrl);
     document.getElementById("remote-url").textContent = remoteUrl;
@@ -47,10 +45,16 @@ const PlayerPage = (() => {
 
     _loadYouTubeAPI();
 
-    document.addEventListener("mousemove", _showControls);
-    document.addEventListener("touchstart", _showControls, { passive: true });
+    document.addEventListener("mousemove", _showFab);
+    document.addEventListener("touchstart", _showFab, { passive: true });
     document.addEventListener("keydown", _onKeyDown);
-    _showControls();
+    // Close panel on click outside
+    document.addEventListener("click", e => {
+      if (!_panelOpen) return;
+      const fab = document.getElementById("fab-ctrl");
+      const panel = document.getElementById("ctrl-panel");
+      if (!fab?.contains(e.target) && !panel?.contains(e.target)) _closePanel();
+    });
   }
 
   // ─── Screen management ────────────────────────────────────────────────────────
@@ -64,10 +68,8 @@ const PlayerPage = (() => {
   }
 
   // ─── Player cleanup ───────────────────────────────────────────────────────────
-  // Completely stops all active media before loading a new song.
 
   function _cleanupCurrentPlayer() {
-    // YouTube
     if (_ytPlayer) {
       try { _ytPlayer.stopVideo(); } catch {}
       try { _ytPlayer.destroy(); } catch {}
@@ -76,24 +78,20 @@ const PlayerPage = (() => {
     const ytContainer = document.getElementById("yt-container");
     if (ytContainer) { ytContainer.innerHTML = ""; ytContainer.hidden = true; }
 
-    // HTML5 video
     const vid = document.getElementById("player-video");
     if (vid) { vid.pause(); vid.removeAttribute("src"); vid.load(); vid.hidden = true; }
 
-    // HTML5 audio
     const aud = document.getElementById("player-audio");
     if (aud) { aud.pause(); aud.removeAttribute("src"); aud.load(); aud.hidden = true; }
     const audioBg = document.getElementById("audio-bg");
     if (audioBg) audioBg.hidden = true;
 
-    // iframe — completely replace element to guarantee all media stops
     _recreateIframe();
 
     _currentType = null;
     _updateControlsForType(null);
   }
 
-  // Replace the iframe element entirely (setting src alone can leave audio running)
   function _recreateIframe() {
     const old = document.getElementById("player-iframe");
     if (!old) return;
@@ -156,7 +154,6 @@ const PlayerPage = (() => {
   function _loadSong(song) {
     if (!song) { _showScreen("idle"); return; }
 
-    // Stop whatever was playing before
     _cleanupCurrentPlayer();
 
     _currentSong = song;
@@ -203,7 +200,6 @@ const PlayerPage = (() => {
       frame.src = embedUrl;
 
     } else {
-      // Generic iframe
       const frame = document.getElementById("player-iframe");
       frame.hidden = false;
       frame.src = song.url;
@@ -212,41 +208,36 @@ const PlayerPage = (() => {
     DB.setState({ playerState: "playing" });
   }
 
-  // ─── Control state per content type ──────────────────────────────────────────
-  // youtube / video / audio → show main overlay (hover-controlled).
-  // bilibili / iframe       → hide overlay entirely, show minimal mgmt bar.
-  // null                    → hide both (idle state).
+  // ─── Controls per content type ────────────────────────────────────────────────
+  // Bilibili: show danmaku + native-window buttons in panel.
+  // All types: FAB is shown when a song is loaded.
 
   function _updateControlsForType(type) {
-    const isIframe = type === "bilibili" || type === "iframe";
     const isBilibili = type === "bilibili";
 
-    const overlay = document.getElementById("overlay-controls");
-    const mgmtBar = document.getElementById("iframe-mgmt-bar");
-
-    // Main overlay: show for controllable media, hide for iframe and idle
-    if (overlay) {
-      overlay.hidden = isIframe || !type;
-      if (isIframe || !type) overlay.classList.remove("visible");
-    }
-
-    // iframe mgmt bar: show only when iframe content is active
-    if (mgmtBar) mgmtBar.hidden = !isIframe;
-
-    // Danmaku button (in mgmt bar, bilibili only)
     const danmakuBtn = document.getElementById("btn-danmaku");
     if (danmakuBtn) {
       danmakuBtn.hidden = !isBilibili;
       danmakuBtn.textContent = _danmakuEnabled ? "弹幕 ON" : "弹幕 OFF";
     }
+    const nativeBtn = document.getElementById("btn-native");
+    if (nativeBtn) nativeBtn.hidden = !type || type === "youtube" || type === "video" || type === "audio";
   }
 
-  // ─── Playback control ─────────────────────────────────────────────────────────
+  // ─── Playback ─────────────────────────────────────────────────────────────────
 
   function _onSongEnded() {
     if (!_currentSong) return;
     DB.removeSong(_currentSong.id).catch(() => {});
     _currentSong = null;
+  }
+
+  function _setVolumeAll(vol) {
+    if (_ytPlayer?.setVolume) _ytPlayer.setVolume(vol);
+    const vid = document.getElementById("player-video");
+    if (vid) vid.volume = vol / 100;
+    const aud = document.getElementById("player-audio");
+    if (aud) aud.volume = vol / 100;
   }
 
   function _pauseAll() {
@@ -263,14 +254,6 @@ const PlayerPage = (() => {
     if (vid && !vid.hidden) vid.play().catch(() => {});
     const aud = document.getElementById("player-audio");
     if (aud && !aud.hidden) aud.play().catch(() => {});
-  }
-
-  function _setVolumeAll(vol) {
-    if (_ytPlayer?.setVolume) _ytPlayer.setVolume(vol);
-    const vid = document.getElementById("player-video");
-    if (vid) vid.volume = vol / 100;
-    const aud = document.getElementById("player-audio");
-    if (aud) aud.volume = vol / 100;
   }
 
   // ─── DB handlers ──────────────────────────────────────────────────────────────
@@ -290,8 +273,6 @@ const PlayerPage = (() => {
     _state = state;
 
     if (state.volume !== undefined && state.volume !== prev.volume) {
-      const slider = document.getElementById("volume-slider");
-      if (slider) slider.value = state.volume;
       if (_currentType !== "bilibili" && _currentType !== "iframe") {
         _setVolumeAll(state.volume);
       }
@@ -305,13 +286,15 @@ const PlayerPage = (() => {
     }
   }
 
-  // ─── UI ───────────────────────────────────────────────────────────────────────
+  // ─── UI updates ───────────────────────────────────────────────────────────────
 
   function _updateNowPlaying(song) {
+    const section = document.getElementById("ctrl-nowplaying");
     const t = document.getElementById("now-playing-title");
     const b = document.getElementById("now-playing-by");
     if (t) t.textContent = song.title || song.url;
     if (b) b.textContent = song.addedBy ? `${I18n.t("display.by")} ${song.addedBy}` : "";
+    if (section) section.hidden = false;
   }
 
   function _updateUpNext() {
@@ -323,12 +306,18 @@ const PlayerPage = (() => {
   }
 
   function _updateQueueList() {
+    // Update FAB badge (show count when panel closed, "×" when open)
+    if (!_panelOpen) {
+      const fabCount = document.getElementById("fab-queue-count");
+      if (fabCount) fabCount.textContent = _playlist.length;
+    }
+    const panelCount = document.getElementById("queue-count");
+    if (panelCount) panelCount.textContent = _playlist.length;
+    const panelBadge = document.getElementById("queue-count-panel");
+    if (panelBadge) panelBadge.textContent = _playlist.length;
+
     const list = document.getElementById("queue-list");
     if (!list) return;
-    ["queue-count", "queue-count-panel", "queue-count-iframe"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = _playlist.length;
-    });
     list.innerHTML = "";
     _playlist.forEach((song, i) => {
       const li = document.createElement("li");
@@ -342,18 +331,60 @@ const PlayerPage = (() => {
     });
   }
 
-  // ─── Controls ─────────────────────────────────────────────────────────────────
+  // ─── FAB + Panel ──────────────────────────────────────────────────────────────
+
+  function _showFab() {
+    const fab = document.getElementById("fab-ctrl");
+    if (!fab) return;
+    fab.classList.remove("fab--hidden");
+    clearTimeout(_controlsTimeout);
+    if (!_panelOpen) {
+      _controlsTimeout = setTimeout(() => {
+        if (!_panelOpen) fab.classList.add("fab--hidden");
+      }, 4000);
+    }
+  }
+
+  function _togglePanel() {
+    _panelOpen ? _closePanel() : _openPanel();
+  }
+
+  function _openPanel() {
+    _panelOpen = true;
+    const fab = document.getElementById("fab-ctrl");
+    const panel = document.getElementById("ctrl-panel");
+    const fabCount = document.getElementById("fab-queue-count");
+    clearTimeout(_controlsTimeout);
+    if (fab) { fab.classList.remove("fab--hidden"); fab.setAttribute("aria-expanded", "true"); }
+    if (fabCount) fabCount.textContent = "×";
+    if (panel) panel.classList.add("panel--open");
+  }
+
+  function _closePanel() {
+    _panelOpen = false;
+    const fab = document.getElementById("fab-ctrl");
+    const panel = document.getElementById("ctrl-panel");
+    const fabCount = document.getElementById("fab-queue-count");
+    if (fab) fab.setAttribute("aria-expanded", "false");
+    if (fabCount) fabCount.textContent = _playlist.length;
+    if (panel) panel.classList.remove("panel--open");
+    clearTimeout(_controlsTimeout);
+    _controlsTimeout = setTimeout(() => {
+      if (!_panelOpen) {
+        const f = document.getElementById("fab-ctrl");
+        if (f) f.classList.add("fab--hidden");
+      }
+    }, 4000);
+  }
+
+  // ─── Controls binding ─────────────────────────────────────────────────────────
 
   function _bindControls() {
-    // Main overlay buttons
+    document.getElementById("fab-ctrl")?.addEventListener("click", _togglePanel);
     document.getElementById("btn-queue")?.addEventListener("click", _toggleQueuePanel);
     document.getElementById("btn-qr")?.addEventListener("click", _toggleQrPanel);
-
-    // iframe mgmt bar buttons
     document.getElementById("btn-danmaku")?.addEventListener("click", _toggleDanmaku);
     document.getElementById("btn-native")?.addEventListener("click", _openNativeWindow);
-    document.getElementById("btn-queue-iframe")?.addEventListener("click", _toggleQueuePanel);
-    document.getElementById("btn-qr-iframe")?.addEventListener("click", _toggleQrPanel);
   }
 
   function _toggleQueuePanel() {
@@ -379,7 +410,6 @@ const PlayerPage = (() => {
     _danmakuEnabled = !_danmakuEnabled;
     const btn = document.getElementById("btn-danmaku");
     if (btn) btn.textContent = _danmakuEnabled ? "弹幕 ON" : "弹幕 OFF";
-    // Reload bilibili iframe with new danmaku setting
     if (_currentSong && _currentType === "bilibili") {
       const embedUrl = Utils.getBilibiliEmbedUrl(_currentSong.url, { danmaku: _danmakuEnabled });
       if (embedUrl) {
@@ -396,28 +426,15 @@ const PlayerPage = (() => {
     if (url) window.open(url, "_blank", "noopener");
   }
 
-  function _showControls() {
-    // For iframe content, the mgmt bar is always visible — don't touch the overlay
-    if (_currentType === "bilibili" || _currentType === "iframe") return;
-
-    const overlay = document.getElementById("overlay-controls");
-    if (!overlay || overlay.hidden) return;
-    overlay.classList.add("visible");
-    clearTimeout(_controlsTimeout);
-    _controlsTimeout = setTimeout(() => {
-      if (overlay) overlay.classList.remove("visible");
-    }, 4000);
-  }
-
   function _handleInvalidSong() {
     Utils.toast("无效链接，跳过", "error");
     setTimeout(_onSongEnded, 1500);
   }
 
   function _onKeyDown(e) {
-    if (e.code === "KeyQ") _toggleQueuePanel();
+    if (e.code === "KeyQ") _togglePanel();
     if (e.code === "KeyD") _toggleDanmaku();
-    _showControls();
+    _showFab();
   }
 
   function _esc(str) {
