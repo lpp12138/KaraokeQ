@@ -2,12 +2,14 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <!-- Apply saved theme before CSS renders to avoid flash -->
+  <script>(function(){var t=localStorage.getItem('kq_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0D0D1A">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
   <title>KaraokeQ — Remote</title>
   <link rel="stylesheet" href="./css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +30,7 @@
     <div class="remote-header-right">
       <span id="connection-status" class="status status--connecting">Connecting…</span>
       <span id="sync-badge" class="badge" style="display:none;"></span>
+      <button class="btn-theme" id="btn-theme" onclick="handleThemeToggle()" title="切换主题"></button>
       <button class="lang-btn" onclick="cycleLang()" title="Switch language">🌐</button>
     </div>
   </header>
@@ -154,9 +157,27 @@
       renderLangSwitcher();
     }
 
+    function updateThemeBtn() {
+      const btn = document.getElementById("btn-theme");
+      if (!btn) return;
+      const dark = Utils.getEffectiveTheme() === "dark";
+      btn.textContent = dark ? "☀️" : "🌙";
+      btn.title = dark ? "切换到浅色模式" : "切换到深色模式";
+    }
+
+    function handleThemeToggle() {
+      Utils.toggleTheme();
+      updateThemeBtn();
+    }
+
     // Render lang switcher after page load
     document.addEventListener("DOMContentLoaded", () => {
+      Utils.initTheme();
+      updateThemeBtn();
       setTimeout(renderLangSwitcher, 600);
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        if (!localStorage.getItem("kq_theme")) updateThemeBtn();
+      });
     });
   </script>
 </body>
