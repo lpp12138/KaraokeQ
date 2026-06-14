@@ -1,6 +1,6 @@
 /**
  * i18n — lightweight translation module
- * Supports: en, zh-CN, zh-TW
+ * Supports: en, zh-CN, zh-TW, ja, ko, es, fr, de
  */
 const I18n = (() => {
   let _strings = {};
@@ -9,7 +9,12 @@ const I18n = (() => {
   const LANG_NAMES = {
     "en":    "English",
     "zh-CN": "简体中文",
-    "zh-TW": "繁體中文"
+    "zh-TW": "繁體中文",
+    "ja":    "日本語",
+    "ko":    "한국어",
+    "es":    "Español",
+    "fr":    "Français",
+    "de":    "Deutsch"
   };
 
   function detectLanguage() {
@@ -18,7 +23,8 @@ const I18n = (() => {
     const browser = navigator.language || navigator.userLanguage || "en";
     if (browser.startsWith("zh-TW") || browser.startsWith("zh-HK")) return "zh-TW";
     if (browser.startsWith("zh")) return "zh-CN";
-    return "en";
+    const baseLang = browser.split("-")[0];
+    return LANG_NAMES[baseLang] ? baseLang : "en";
   }
 
   // Load locale JSON from /locales/
