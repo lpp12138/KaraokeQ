@@ -78,12 +78,31 @@ const Utils = (() => {
   }
 
   // Build Bilibili embed URL
-  function getBilibiliEmbedUrl(url) {
+  // opts: { danmaku: boolean (default true), autoplay: boolean (default true) }
+  function getBilibiliEmbedUrl(url, opts = {}) {
     const id = getBilibiliId(url);
     if (!id) return null;
-    if (id.startsWith("BV")) return `https://player.bilibili.com/player.html?bvid=${id}&autoplay=1&high_quality=1`;
-    if (id.startsWith("av")) return `https://player.bilibili.com/player.html?aid=${id.slice(2)}&autoplay=1&high_quality=1`;
+    const danmaku = opts.danmaku === false ? 0 : 1;
+    const autoplay = opts.autoplay === false ? 0 : 1;
+    const base = "https://player.bilibili.com/player.html";
+    const common = `&autoplay=${autoplay}&high_quality=1&danmaku=${danmaku}`;
+    if (id.startsWith("BV")) return `${base}?bvid=${id}${common}`;
+    if (id.startsWith("av")) return `${base}?aid=${id.slice(2)}${common}`;
     return null;
+  }
+
+  // Get the "native" (non-embed) watch URL for a song
+  function getNativeUrl(song) {
+    if (!song) return null;
+    if (song.type === "youtube") {
+      const vid = getYouTubeId(song.url);
+      return vid ? `https://www.youtube.com/watch?v=${vid}` : song.url;
+    }
+    if (song.type === "bilibili") {
+      const id = getBilibiliId(song.url);
+      return id ? `https://www.bilibili.com/video/${id}` : song.url;
+    }
+    return song.url;
   }
 
   // Try to extract page title from a URL (YouTube oEmbed)
@@ -206,6 +225,7 @@ const Utils = (() => {
     getYouTubeId,
     getBilibiliId,
     getBilibiliEmbedUrl,
+    getNativeUrl,
     fetchYouTubeTitle,
     getYouTubeThumbnail,
     uid,

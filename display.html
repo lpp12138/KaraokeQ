@@ -69,6 +69,10 @@
           <span class="room-val" id="room-code-overlay"></span>
         </div>
         <div class="overlay-top-buttons">
+          <!-- Danmaku toggle: shown only for Bilibili content -->
+          <button class="overlay-top-btn" id="btn-danmaku" hidden title="开/关弹幕（重载视频）">弹幕 ON</button>
+          <!-- Open native browser window for VIP/resolution access -->
+          <button class="overlay-top-btn" id="btn-native" hidden title="在新窗口打开原网页（支持会员/画质设置）">↗ 原网页</button>
           <button class="overlay-top-btn" id="btn-qr">QR</button>
           <button class="overlay-top-btn" id="btn-queue">
             <span data-i18n="display.queue">Queue</span>
@@ -89,9 +93,18 @@
           <p id="now-playing-by"></p>
         </div>
 
+        <!-- iframe notice: shown when bilibili/iframe is playing -->
+        <div id="iframe-notice" hidden style="
+          font-size:.78rem;color:var(--warn);
+          background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);
+          border-radius:var(--radius-sm);padding:.4rem .75rem;margin-bottom:.75rem;
+          display:flex;align-items:center;gap:.5rem;">
+          ⚠️ iframe 内容：暂停/音量请通过播放器内置控件操作 &bull; 点击「↗ 原网页」可访问会员/画质设置
+        </div>
+
         <div class="transport-row">
           <button class="transport-btn transport-btn--main" id="btn-play-pause">▶</button>
-          <button class="transport-btn" id="btn-next">⏭</button>
+          <button class="transport-btn" id="btn-next" title="跳过 (→)">⏭</button>
           <div class="volume-control">
             <span class="vol-icon">🔈</span>
             <input type="range" id="volume-slider" min="0" max="100" value="80" aria-label="Volume">

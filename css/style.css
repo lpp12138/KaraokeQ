@@ -565,6 +565,7 @@ small { font-size: .8rem; color: var(--text2); }
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  z-index: 5; /* above iframes */
 }
 
 #overlay-controls.visible {
