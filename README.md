@@ -4,7 +4,7 @@
 [![简体中文](https://img.shields.io/badge/lang-简体中文-red.svg)](./README.zh-CN.md)
 [![日本語](https://img.shields.io/badge/lang-日本語-green.svg)](./README.ja.md)
 
-A modern, cross-device web karaoke song-request system.
+A modern web-based karaoke song-request and queue manager that works across all your devices.
 
 ## Features
 
@@ -12,7 +12,7 @@ A modern, cross-device web karaoke song-request system.
 - **Remote control** — Any phone or tablet on the network can add, remove, and reorder songs
 - **YouTube support** — Auto-plays YouTube videos with full API control and auto-advance
 - **Multi-format** — Also supports Bilibili embeds, direct MP4/MP3 files, and generic iframes
-- **Real-time sync** — Firebase Realtime Database keeps all devices in sync instantly
+- **Real-time sync** — Every connected device stays in sync instantly
 - **Multi-language** — English, Simplified Chinese (简体中文), Traditional Chinese (繁體中文), Japanese (日本語), Korean (한국어), Spanish (Español), French (Français), German (Deutsch)
 - **Volume control** — Adjustable from any remote device
 - **Drag to reorder** — Drag songs in the queue to change their order
@@ -70,8 +70,7 @@ A modern, cross-device web karaoke song-request system.
 - Chrome 80+ / Edge 80+
 - Firefox 75+
 - Safari 14+ (iOS 14+)
-- BroadcastChannel requires same browser on same device (demo mode only)
-- Firebase mode works across all devices on any network
+- The display and remote stay in sync in real time across all connected devices
 
 ---
 

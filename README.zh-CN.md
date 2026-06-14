@@ -4,7 +4,7 @@
 [![简体中文](https://img.shields.io/badge/lang-简体中文-red.svg)](./README.zh-CN.md)
 [![日本語](https://img.shields.io/badge/lang-日本語-green.svg)](./README.ja.md)
 
-一个现代化的跨设备网页卡拉OK点歌器。
+一个现代化的网页卡拉OK点歌与队列管理器，可在你的所有设备上协同使用。
 
 ## 功能特性
 
@@ -12,7 +12,7 @@
 - **远程遥控** — 局域网内任意手机或平板均可添加、删除和重新排序歌曲
 - **YouTube 支持** — 自动播放 YouTube 视频，完整 API 控制并自动续播
 - **多格式支持** — 同时支持 Bilibili 嵌入、直链 MP4/MP3 文件以及通用 iframe
-- **实时同步** — Firebase 实时数据库让所有设备即时保持同步
+- **实时同步** — 所有已连接的设备都会即时保持同步
 - **多语言** — 英语、简体中文、繁體中文、日本語、한국어、Español、Français、Deutsch
 - **音量控制** — 可从任意遥控设备调节
 - **拖拽排序** — 在队列中拖动歌曲即可改变播放顺序
@@ -70,8 +70,7 @@
 - Chrome 80+ / Edge 80+
 - Firefox 75+
 - Safari 14+ (iOS 14+)
-- BroadcastChannel 需在同一设备的同一浏览器中使用（仅演示模式）
-- Firebase 模式可在任意网络的所有设备上工作
+- 显示端与遥控端会在所有已连接设备之间实时保持同步
 
 ---
 
