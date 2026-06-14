@@ -4,7 +4,7 @@
 [![简体中文](https://img.shields.io/badge/lang-简体中文-red.svg)](./README.zh-CN.md)
 [![日本語](https://img.shields.io/badge/lang-日本語-green.svg)](./README.ja.md)
 
-A modern, cross-device karaoke song-request system built for GitHub Pages.
+A modern, cross-device web karaoke song-request system.
 
 ## Features
 

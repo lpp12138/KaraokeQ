@@ -4,7 +4,7 @@
 [![简体中文](https://img.shields.io/badge/lang-简体中文-red.svg)](./README.zh-CN.md)
 [![日本語](https://img.shields.io/badge/lang-日本語-green.svg)](./README.ja.md)
 
-GitHub Pages 向けに作られた、モダンでクロスデバイス対応のカラオケ予約システムです。
+モダンでクロスデバイス対応の、ウェブ版カラオケ点歌システムです。
 
 ## 機能
 

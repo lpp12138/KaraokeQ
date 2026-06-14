@@ -4,7 +4,7 @@
 [![简体中文](https://img.shields.io/badge/lang-简体中文-red.svg)](./README.zh-CN.md)
 [![日本語](https://img.shields.io/badge/lang-日本語-green.svg)](./README.ja.md)
 
-一个为 GitHub Pages 打造的现代化跨设备卡拉OK点歌系统。
+一个现代化的跨设备网页卡拉OK点歌器。
 
 ## 功能特性
 
