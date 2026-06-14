@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0D0D1A">
+  <meta name="color-scheme" content="dark">
+  <title>KaraokeQ — Remote</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="remote-page">
+
+  <!-- HEADER -->
+  <header class="remote-header">
+    <div class="remote-header-left">
+      <span class="remote-app-name" data-i18n="app.name">KaraokeQ</span>
+      <span class="remote-room-info">
+        <span data-i18n="remote.connectedTo">Room</span>
+        <span class="remote-room-code room-code-display">——</span>
+      </span>
+    </div>
+    <div class="remote-header-right">
+      <span id="connection-status" class="status status--connecting">Connecting…</span>
+      <span id="sync-badge" class="badge" style="display:none;"></span>
+      <button class="lang-btn" onclick="cycleLang()" title="Switch language">🌐</button>
+    </div>
+  </header>
+
+  <!-- NOW PLAYING -->
+  <div id="now-playing-section" hidden>
+    <div class="np-label" data-i18n="remote.nowPlaying">Now Playing</div>
+    <div class="np-row">
+      <div class="np-pulse"></div>
+      <span id="now-playing-title"></span>
+      <span id="now-playing-type" class="badge"></span>
+    </div>
+  </div>
+  <div id="now-playing-empty" style="padding:.65rem 1rem;font-size:.88rem;color:var(--text3);">
+    <span data-i18n="remote.nothingPlaying">Nothing playing yet</span>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-section">
+    <div class="transport">
+      <button id="btn-play-pause" aria-label="Play/Pause">▶</button>
+      <button id="btn-next" class="btn btn--secondary btn--sm">
+        ⏭ <span data-i18n="remote.next">Skip</span>
+      </button>
+    </div>
+    <div class="volume-row">
+      <span class="volume-label">🔈 <span data-i18n="common.volume">Volume</span></span>
+      <input type="range" id="volume-slider" min="0" max="100" value="80" style="flex:1;">
+      <span id="volume-value" style="font-family:var(--font-mono);font-size:.82rem;color:var(--text2);width:3rem;text-align:right;">80%</span>
+    </div>
+  </div>
+
+  <!-- QUEUE -->
+  <div class="queue-section">
+    <div class="queue-header">
+      <h2>
+        <span data-i18n="remote.queue">Queue</span>
+        <span id="queue-count" class="queue-count-badge">0</span>
+      </h2>
+      <small data-i18n="remote.dragToReorder" style="color:var(--text3);">Drag to reorder</small>
+    </div>
+    <ul id="queue-list"></ul>
+    <p id="queue-empty" hidden><span data-i18n="remote.emptyQueue">Queue is empty — add some songs!</span></p>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="settings-section">
+    <div class="settings-row">
+      <label class="settings-label" for="device-name">
+        <span data-i18n="remote.yourName">Your name</span>
+      </label>
+      <input type="text" id="device-name" class="device-name-input" maxlength="20"
+        data-i18n-placeholder="remote.namePlaceholder">
+    </div>
+    <div class="lang-switcher" id="lang-switcher" style="justify-content:flex-end;"></div>
+  </div>
+
+  <!-- FAB -->
+  <button id="fab-add" aria-label="Add song" aria-expanded="false">+</button>
+
+  <!-- ADD SONG SHEET -->
+  <div id="add-song-panel" hidden role="dialog" aria-modal="true">
+    <div class="add-song-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">
+        <span data-i18n="remote.addSong">Add Song</span>
+        <button class="btn-icon" id="btn-close-add">✕</button>
+      </div>
+      <form id="add-song-form" onsubmit="return false;">
+        <div class="add-form-field">
+          <div class="add-form-label">
+            <span>URL</span>
+            <span id="url-type-badge" class="badge" hidden></span>
+          </div>
+          <input type="url" id="song-url" inputmode="url" autocomplete="off"
+            autocorrect="off" spellcheck="false"
+            data-i18n-placeholder="remote.urlPlaceholder">
+        </div>
+        <div class="add-form-field">
+          <div class="add-form-label">
+            <span data-i18n="remote.songTitle" style="color:var(--text3);">Title</span>
+          </div>
+          <input type="text" id="song-title" autocomplete="off"
+            data-i18n-placeholder="remote.titlePlaceholder">
+        </div>
+        <div id="add-error" role="alert"></div>
+        <button type="submit" id="btn-add-song" class="btn btn--primary btn--full btn--lg"
+          data-i18n="remote.addToQueue">Add to Queue</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- PeerJS + SortableJS + App -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/i18n.js"></script>
+  <script src="./js/db.js"></script>
+  <script src="./js/remote-page.js"></script>
+
+  <script>
+    async function cycleLang() {
+      const langs = Object.keys(I18n.availableLanguages());
+      const next = langs[(langs.indexOf(I18n.currentLang()) + 1) % langs.length];
+      await I18n.load(next);
+      renderLangSwitcher();
+    }
+
+    function renderLangSwitcher() {
+      const c = document.getElementById("lang-switcher");
+      if (!c) return;
+      const langs = I18n.availableLanguages();
+      c.innerHTML = Object.entries(langs).map(([code, name]) =>
+        `<button class="lang-btn" aria-current="${I18n.currentLang()===code}"
+          onclick="switchLang('${code}')">${name}</button>`
+      ).join("");
+    }
+
+    async function switchLang(lang) {
+      await I18n.load(lang);
+      renderLangSwitcher();
+    }
+
+    // Render lang switcher after page load
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(renderLangSwitcher, 600);
+    });
+  </script>
+</body>
+</html>

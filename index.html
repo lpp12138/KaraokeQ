@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KaraokeQ — 智能卡拉OK点歌系统">
+  <meta name="theme-color" content="#8B5CF6">
+  <meta name="color-scheme" content="dark">
+  <title>KaraokeQ</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="landing-page">
+
+  <header style="position:absolute;top:1rem;right:1rem;display:flex;align-items:center;gap:.75rem;">
+    <div class="lang-switcher" id="lang-switcher" role="group" aria-label="Language"></div>
+  </header>
+
+  <!-- Logo -->
+  <div class="landing-logo gradient-text" data-i18n="app.name">KaraokeQ</div>
+  <p class="landing-tagline" data-i18n="app.tagline">Smart Karaoke Queue</p>
+
+  <!-- Action cards -->
+  <div class="landing-actions" id="landing-actions">
+    <button class="action-card" id="btn-create" onclick="createRoom()">
+      <span class="action-card__icon">🎵</span>
+      <span class="action-card__label" data-i18n="landing.createRoom">Create Room</span>
+      <span class="action-card__desc" data-i18n="landing.openDisplay">Open on Display Screen</span>
+    </button>
+    <button class="action-card" id="btn-join-show" onclick="showJoinForm()">
+      <span class="action-card__icon">📱</span>
+      <span class="action-card__label" data-i18n="landing.joinRoom">Join Room</span>
+      <span class="action-card__desc" data-i18n="landing.orScanQr">or scan QR code</span>
+    </button>
+  </div>
+
+  <!-- Join form -->
+  <div class="join-form" id="join-form">
+    <input
+      id="room-code-input"
+      class="room-code-input"
+      type="text"
+      maxlength="6"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
+      data-i18n-placeholder="landing.enterRoomCode"
+    >
+    <button class="btn btn--primary" onclick="joinRoom()">
+      <span data-i18n="landing.join">Join</span>
+    </button>
+    <button class="btn btn--ghost" onclick="hideJoinForm()">
+      <span data-i18n="common.cancel">Cancel</span>
+    </button>
+  </div>
+
+  <p id="landing-error" hidden style="color:var(--error);font-size:.9rem;margin-top:.75rem;"></p>
+
+  <!-- Recent rooms -->
+  <div class="recent-rooms" id="recent-rooms-section" hidden>
+    <h3 data-i18n="landing.recentRooms">Recent Rooms</h3>
+    <div id="recent-rooms-list"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <span style="color:var(--text3);font-size:.78rem;">
+      数据存储于本地浏览器 &bull; P2P via WebRTC
+    </span>
+  </footer>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/i18n.js"></script>
+
+  <script>
+    (async () => {
+      await I18n.init();
+      renderLangSwitcher();
+      renderRecentRooms();
+
+      // If ?room= in URL, go directly to remote
+      const code = Utils.getRoomCodeFromURL();
+      if (code) joinWithCode(code);
+    })();
+
+    function createRoom() {
+      const btn = document.getElementById("btn-create");
+      const label = btn.querySelector(".action-card__label");
+      label.textContent = I18n.t("landing.creatingRoom");
+      btn.disabled = true;
+
+      const code = Utils.generateRoomCode();
+      // Save a fresh room marker in localStorage
+      try {
+        localStorage.setItem("kq_room_" + code, JSON.stringify({
+          playlist: [],
+          state: { playerState: "idle", volume: APP_SETTINGS.defaultVolume },
+          ts: Date.now()
+        }));
+      } catch {}
+      Utils.saveRecentRoom(code);
+      window.location.href = Utils.buildURL("display.html", code);
+    }
+
+    function joinRoom() {
+      const input = document.getElementById("room-code-input");
+      const code = (input?.value || "").trim().toUpperCase();
+      if (code.length < 4) {
+        showError(I18n.t("landing.roomNotFound"));
+        return;
+      }
+      joinWithCode(code);
+    }
+
+    function joinWithCode(code) {
+      Utils.saveRecentRoom(code);
+      window.location.href = Utils.buildURL("remote.html", code);
+    }
+
+    function showJoinForm() {
+      document.getElementById("join-form").classList.add("visible");
+      document.getElementById("room-code-input").focus();
+      document.getElementById("landing-actions").style.opacity = ".4";
+    }
+
+    function hideJoinForm() {
+      document.getElementById("join-form").classList.remove("visible");
+      document.getElementById("landing-actions").style.opacity = "";
+      document.getElementById("landing-error").hidden = true;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("landing-error");
+      el.textContent = msg;
+      el.hidden = false;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("room-code-input")?.addEventListener("keydown", e => {
+        if (e.key === "Enter") joinRoom();
+      });
+    });
+
+    function renderRecentRooms() {
+      const rooms = Utils.getRecentRooms();
+      const section = document.getElementById("recent-rooms-section");
+      const list = document.getElementById("recent-rooms-list");
+      if (!rooms.length) { section.hidden = true; return; }
+      section.hidden = false;
+      list.innerHTML = rooms.map(r => `
+        <div class="recent-room-item" onclick="joinWithCode('${r.code}')" tabindex="0" role="button">
+          <span class="recent-room-code">${r.code}</span>
+          <small>${new Date(r.ts).toLocaleDateString()}</small>
+        </div>
+      `).join("");
+    }
+
+    function renderLangSwitcher() {
+      const container = document.getElementById("lang-switcher");
+      if (!container) return;
+      const langs = I18n.availableLanguages();
+      container.innerHTML = Object.entries(langs).map(([code, name]) => `
+        <button class="lang-btn"
+          aria-current="${I18n.currentLang() === code ? 'true' : 'false'}"
+          onclick="switchLang('${code}')">${name}</button>
+      `).join("");
+    }
+
+    async function switchLang(lang) {
+      await I18n.load(lang);
+      renderLangSwitcher();
+    }
+  </script>
+</body>
+</html>

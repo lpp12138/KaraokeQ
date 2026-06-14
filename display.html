@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>KaraokeQ — Display</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    html, body { overflow: hidden; height: 100%; background: #000; }
+  </style>
+</head>
+<body class="display-page">
+
+  <!-- ═══ IDLE SCREEN ═══ -->
+  <div id="screen-idle">
+    <div class="idle-logo gradient-text" data-i18n="app.name">KaraokeQ</div>
+
+    <div class="idle-room">
+      <div class="idle-room-label" data-i18n="display.roomCode">Room</div>
+      <div class="idle-room-code" id="room-code">——</div>
+    </div>
+
+    <div class="idle-qr-section">
+      <div id="qr-code"></div>
+      <p class="idle-qr-label" data-i18n="display.scanToJoin">Scan to add songs</p>
+    </div>
+
+    <a class="idle-url" id="remote-url" href="#" target="_blank"></a>
+
+    <p class="idle-waiting" data-i18n="display.waitingForSongs">Waiting for songs…</p>
+  </div>
+
+  <!-- ═══ PLAYER SCREEN ═══ -->
+  <div id="screen-player" hidden>
+
+    <div id="yt-container" class="sub-player" hidden></div>
+
+    <video id="player-video" class="sub-player" hidden playsinline controls></video>
+
+    <audio id="player-audio" hidden autoplay></audio>
+
+    <div id="audio-bg" class="sub-player" hidden style="
+      background:radial-gradient(ellipse at center,#2D1B69 0%,#0D0D1A 70%);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;">
+      <div style="font-size:6rem;">🎵</div>
+      <div id="audio-title" style="font-size:1.4rem;font-weight:700;text-align:center;padding:0 2rem;"></div>
+    </div>
+
+    <iframe
+      id="player-iframe"
+      class="sub-player"
+      hidden
+      allow="autoplay; fullscreen; accelerometer; gyroscope"
+      allowfullscreen
+      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+    ></iframe>
+
+    <!-- Overlay controls -->
+    <div id="overlay-controls">
+
+      <div class="overlay-top">
+        <div class="overlay-room-badge">
+          <span class="room-label" data-i18n="display.roomCode">Room</span>
+          <span class="room-val" id="room-code-overlay"></span>
+        </div>
+        <div class="overlay-top-buttons">
+          <button class="overlay-top-btn" id="btn-qr">QR</button>
+          <button class="overlay-top-btn" id="btn-queue">
+            <span data-i18n="display.queue">Queue</span>
+            <span id="queue-count" class="queue-count-badge" style="margin-left:.3rem;">0</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="up-next-section" hidden>
+        <p class="up-next-label" data-i18n="display.upNext">Up Next</p>
+        <p id="up-next-title"></p>
+      </div>
+
+      <div class="overlay-bottom">
+        <div class="now-playing-info">
+          <p class="now-playing-label" data-i18n="display.nowPlaying">Now Playing</p>
+          <h1 id="now-playing-title" style="font-size:1.6rem;font-weight:700;"></h1>
+          <p id="now-playing-by"></p>
+        </div>
+
+        <div class="transport-row">
+          <button class="transport-btn transport-btn--main" id="btn-play-pause">▶</button>
+          <button class="transport-btn" id="btn-next">⏭</button>
+          <div class="volume-control">
+            <span class="vol-icon">🔈</span>
+            <input type="range" id="volume-slider" min="0" max="100" value="80" aria-label="Volume">
+            <span class="vol-icon">🔊</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queue panel -->
+    <div id="queue-panel" hidden>
+      <div class="queue-panel-header">
+        <h3>
+          <span data-i18n="display.queue">Queue</span>
+          <span class="queue-count-badge" id="queue-count-panel">0</span>
+        </h3>
+        <button class="btn-icon" onclick="document.getElementById('queue-panel').hidden=true">✕</button>
+      </div>
+      <ul class="queue-list" id="queue-list"></ul>
+    </div>
+
+    <!-- QR panel (in-player) -->
+    <div id="qr-panel" hidden>
+      <p style="font-size:.8rem;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;" data-i18n="display.scanToJoin">Scan to add songs</p>
+      <div id="qr-code-player" style="background:#fff;padding:.75rem;border-radius:var(--radius);"></div>
+      <p id="qr-url" style="font-size:.78rem;color:var(--text3);word-break:break-all;max-width:280px;text-align:center;"></p>
+      <button class="btn btn--ghost btn--sm" onclick="document.getElementById('qr-panel').hidden=true" data-i18n="common.close">Close</button>
+    </div>
+
+  </div>
+
+  <div id="mode-indicator"></div>
+
+  <!-- PeerJS + QRCode + App -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/i18n.js"></script>
+  <script src="./js/db.js"></script>
+  <script src="./js/player-page.js"></script>
+</body>
+</html>
