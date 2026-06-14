@@ -23,8 +23,10 @@ const PlayerPage = (() => {
     _bindControls();
 
     // Room code display + QR
-    document.getElementById("room-code").textContent = roomCode;
-    document.getElementById("room-code-overlay").textContent = roomCode;
+    ["room-code", "room-code-overlay", "room-code-iframe"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = roomCode;
+    });
     const remoteUrl = Utils.buildURL("remote.html", roomCode);
     Utils.renderQRCode("qr-code", remoteUrl);
     document.getElementById("remote-url").textContent = remoteUrl;
@@ -62,7 +64,7 @@ const PlayerPage = (() => {
   }
 
   // ─── Player cleanup ───────────────────────────────────────────────────────────
-  // Must be called before loading a new song or returning to idle screen.
+  // Completely stops all active media before loading a new song.
 
   function _cleanupCurrentPlayer() {
     // YouTube
@@ -84,12 +86,26 @@ const PlayerPage = (() => {
     const audioBg = document.getElementById("audio-bg");
     if (audioBg) audioBg.hidden = true;
 
-    // iframe — navigate to blank to stop all playback immediately
-    const frame = document.getElementById("player-iframe");
-    if (frame) { frame.src = "about:blank"; frame.hidden = true; }
+    // iframe — completely replace element to guarantee all media stops
+    _recreateIframe();
 
     _currentType = null;
     _updateControlsForType(null);
+  }
+
+  // Replace the iframe element entirely (setting src alone can leave audio running)
+  function _recreateIframe() {
+    const old = document.getElementById("player-iframe");
+    if (!old) return;
+    const parent = old.parentNode;
+    const fresh = document.createElement("iframe");
+    fresh.id = "player-iframe";
+    fresh.className = "sub-player";
+    fresh.setAttribute("allow", "autoplay; fullscreen; accelerometer; gyroscope");
+    fresh.setAttribute("allowfullscreen", "");
+    fresh.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation allow-popups");
+    fresh.hidden = true;
+    parent.replaceChild(fresh, old);
   }
 
   // ─── YouTube IFrame API ───────────────────────────────────────────────────────
@@ -197,44 +213,32 @@ const PlayerPage = (() => {
   }
 
   // ─── Control state per content type ──────────────────────────────────────────
-  // YouTube / video / audio → full control.
-  // bilibili / iframe       → pause/volume disabled (cross-origin restriction).
+  // youtube / video / audio → show main overlay (hover-controlled).
+  // bilibili / iframe       → hide overlay entirely, show minimal mgmt bar.
+  // null                    → hide both (idle state).
 
   function _updateControlsForType(type) {
-    const isControllable = type === "youtube" || type === "video" || type === "audio";
     const isIframe = type === "bilibili" || type === "iframe";
     const isBilibili = type === "bilibili";
 
-    // Play/pause button
-    const ppBtn = document.getElementById("btn-play-pause");
-    if (ppBtn) {
-      ppBtn.disabled = isIframe;
-      ppBtn.title = isIframe ? "iframe 内容不支持外部控制，请使用播放器自带控件" : "";
-      ppBtn.style.opacity = isIframe ? "0.35" : "";
+    const overlay = document.getElementById("overlay-controls");
+    const mgmtBar = document.getElementById("iframe-mgmt-bar");
+
+    // Main overlay: show for controllable media, hide for iframe and idle
+    if (overlay) {
+      overlay.hidden = isIframe || !type;
+      if (isIframe || !type) overlay.classList.remove("visible");
     }
 
-    // Volume slider in overlay
-    const volSlider = document.getElementById("volume-slider");
-    if (volSlider) {
-      volSlider.disabled = isIframe;
-      volSlider.style.opacity = isIframe ? "0.35" : "";
-      volSlider.title = isIframe ? "iframe 内容不支持外部音量控制" : "";
-    }
+    // iframe mgmt bar: show only when iframe content is active
+    if (mgmtBar) mgmtBar.hidden = !isIframe;
 
-    // Danmaku toggle — only for Bilibili
+    // Danmaku button (in mgmt bar, bilibili only)
     const danmakuBtn = document.getElementById("btn-danmaku");
     if (danmakuBtn) {
       danmakuBtn.hidden = !isBilibili;
       danmakuBtn.textContent = _danmakuEnabled ? "弹幕 ON" : "弹幕 OFF";
     }
-
-    // Open-in-native-window button — show for all except idle
-    const nativeBtn = document.getElementById("btn-native");
-    if (nativeBtn) nativeBtn.hidden = !type;
-
-    // iframe notice
-    const notice = document.getElementById("iframe-notice");
-    if (notice) notice.hidden = !isIframe;
   }
 
   // ─── Playback control ─────────────────────────────────────────────────────────
@@ -321,7 +325,7 @@ const PlayerPage = (() => {
   function _updateQueueList() {
     const list = document.getElementById("queue-list");
     if (!list) return;
-    ["queue-count", "queue-count-panel"].forEach(id => {
+    ["queue-count", "queue-count-panel", "queue-count-iframe"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = _playlist.length;
     });
@@ -341,29 +345,18 @@ const PlayerPage = (() => {
   // ─── Controls ─────────────────────────────────────────────────────────────────
 
   function _bindControls() {
+    // Main overlay buttons
     document.getElementById("btn-play-pause")?.addEventListener("click", _togglePlayPause);
     document.getElementById("btn-next")?.addEventListener("click", _skipNext);
-    document.getElementById("btn-queue")?.addEventListener("click", () => {
-      const p = document.getElementById("queue-panel");
-      if (p) p.hidden = !p.hidden;
-    });
-    document.getElementById("btn-qr")?.addEventListener("click", () => {
-      const p = document.getElementById("qr-panel");
-      if (p) {
-        // Render QR in the in-player panel on first open
-        const qrEl = document.getElementById("qr-code-player");
-        if (qrEl && !qrEl.innerHTML) {
-          const roomCode = Utils.getRoomCodeFromURL();
-          const url = Utils.buildURL("remote.html", roomCode);
-          Utils.renderQRCode("qr-code-player", url);
-          const urlEl = document.getElementById("qr-url");
-          if (urlEl) urlEl.textContent = url;
-        }
-        p.hidden = !p.hidden;
-      }
-    });
+    document.getElementById("btn-queue")?.addEventListener("click", _toggleQueuePanel);
+    document.getElementById("btn-qr")?.addEventListener("click", _toggleQrPanel);
+
+    // iframe mgmt bar buttons
     document.getElementById("btn-danmaku")?.addEventListener("click", _toggleDanmaku);
     document.getElementById("btn-native")?.addEventListener("click", _openNativeWindow);
+    document.getElementById("btn-queue-iframe")?.addEventListener("click", _toggleQueuePanel);
+    document.getElementById("btn-skip-iframe")?.addEventListener("click", _skipNext);
+    document.getElementById("btn-qr-iframe")?.addEventListener("click", _toggleQrPanel);
 
     const slider = document.getElementById("volume-slider");
     if (slider) {
@@ -374,6 +367,25 @@ const PlayerPage = (() => {
         DB.setState({ volume: vol });
       });
     }
+  }
+
+  function _toggleQueuePanel() {
+    const p = document.getElementById("queue-panel");
+    if (p) p.hidden = !p.hidden;
+  }
+
+  function _toggleQrPanel() {
+    const p = document.getElementById("qr-panel");
+    if (!p) return;
+    const qrEl = document.getElementById("qr-code-player");
+    if (qrEl && !qrEl.innerHTML) {
+      const roomCode = Utils.getRoomCodeFromURL();
+      const url = Utils.buildURL("remote.html", roomCode);
+      Utils.renderQRCode("qr-code-player", url);
+      const urlEl = document.getElementById("qr-url");
+      if (urlEl) urlEl.textContent = url;
+    }
+    p.hidden = !p.hidden;
   }
 
   function _togglePlayPause() {
@@ -398,8 +410,11 @@ const PlayerPage = (() => {
     // Reload bilibili iframe with new danmaku setting
     if (_currentSong && _currentType === "bilibili") {
       const embedUrl = Utils.getBilibiliEmbedUrl(_currentSong.url, { danmaku: _danmakuEnabled });
-      const frame = document.getElementById("player-iframe");
-      if (frame && embedUrl) frame.src = embedUrl;
+      if (embedUrl) {
+        _recreateIframe();
+        const frame = document.getElementById("player-iframe");
+        if (frame) { frame.hidden = false; frame.src = embedUrl; }
+      }
     }
   }
 
@@ -410,8 +425,12 @@ const PlayerPage = (() => {
   }
 
   function _showControls() {
+    // For iframe content, the mgmt bar is always visible — don't touch the overlay
+    if (_currentType === "bilibili" || _currentType === "iframe") return;
+
     const overlay = document.getElementById("overlay-controls");
-    if (overlay) overlay.classList.add("visible");
+    if (!overlay || overlay.hidden) return;
+    overlay.classList.add("visible");
     clearTimeout(_controlsTimeout);
     _controlsTimeout = setTimeout(() => {
       if (overlay) overlay.classList.remove("visible");
@@ -434,10 +453,7 @@ const PlayerPage = (() => {
       const s = document.getElementById("volume-slider");
       if (s && !s.disabled) { s.value = Math.max(0, +s.value - 5); s.dispatchEvent(new Event("input")); }
     }
-    if (e.code === "KeyQ") {
-      const p = document.getElementById("queue-panel");
-      if (p) p.hidden = !p.hidden;
-    }
+    if (e.code === "KeyQ") _toggleQueuePanel();
     if (e.code === "KeyD") _toggleDanmaku();
     _showControls();
   }

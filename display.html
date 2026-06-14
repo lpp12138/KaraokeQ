@@ -60,8 +60,25 @@
       sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
     ></iframe>
 
-    <!-- Overlay controls -->
-    <div id="overlay-controls">
+    <!-- iframe management bar: only shown when bilibili/iframe content is playing -->
+    <div id="iframe-mgmt-bar" hidden>
+      <div class="overlay-room-badge">
+        <span class="room-label" data-i18n="display.roomCode">Room</span>
+        <span class="room-val" id="room-code-iframe"></span>
+      </div>
+      <div style="flex:1;min-width:.25rem;"></div>
+      <button class="overlay-top-btn" id="btn-danmaku" hidden>弹幕 ON</button>
+      <button class="overlay-top-btn" id="btn-native">↗ 原网页</button>
+      <button class="overlay-top-btn" id="btn-queue-iframe">
+        <span data-i18n="display.queue">队列</span>
+        <span id="queue-count-iframe" class="queue-count-badge" style="margin-left:.3rem;">0</span>
+      </button>
+      <button class="overlay-top-btn" id="btn-skip-iframe" title="跳过 (→)">⏭</button>
+      <button class="overlay-top-btn" id="btn-qr-iframe">QR</button>
+    </div>
+
+    <!-- Overlay controls: only shown for youtube/video/audio content -->
+    <div id="overlay-controls" hidden>
 
       <div class="overlay-top">
         <div class="overlay-room-badge">
@@ -69,10 +86,6 @@
           <span class="room-val" id="room-code-overlay"></span>
         </div>
         <div class="overlay-top-buttons">
-          <!-- Danmaku toggle: shown only for Bilibili content -->
-          <button class="overlay-top-btn" id="btn-danmaku" hidden title="开/关弹幕（重载视频）">弹幕 ON</button>
-          <!-- Open native browser window for VIP/resolution access -->
-          <button class="overlay-top-btn" id="btn-native" hidden title="在新窗口打开原网页（支持会员/画质设置）">↗ 原网页</button>
           <button class="overlay-top-btn" id="btn-qr">QR</button>
           <button class="overlay-top-btn" id="btn-queue">
             <span data-i18n="display.queue">Queue</span>
@@ -91,15 +104,6 @@
           <p class="now-playing-label" data-i18n="display.nowPlaying">Now Playing</p>
           <h1 id="now-playing-title" style="font-size:1.6rem;font-weight:700;"></h1>
           <p id="now-playing-by"></p>
-        </div>
-
-        <!-- iframe notice: shown when bilibili/iframe is playing -->
-        <div id="iframe-notice" hidden style="
-          font-size:.78rem;color:var(--warn);
-          background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);
-          border-radius:var(--radius-sm);padding:.4rem .75rem;margin-bottom:.75rem;
-          display:flex;align-items:center;gap:.5rem;">
-          ⚠️ iframe 内容：暂停/音量请通过播放器内置控件操作 &bull; 点击「↗ 原网页」可访问会员/画质设置
         </div>
 
         <div class="transport-row">
