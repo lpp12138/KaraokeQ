@@ -1,80 +1,36 @@
-# KaraokeQ — Smart Karaoke Queue Manager
+# KaraokeQ - Smart Karaoke Queue Manager
 
-A modern, cross-device karaoke song-request system built for GitHub Pages.
+A modern, cross-device karaoke song-request system built for GitHub Pages. It runs as a static site: room data stays in the display browser, and remotes sync over PeerJS/WebRTC.
 
 ## Features
 
 - **Display mode** — Full-screen video/audio player on your TV or projector
-- **Remote control** — Any phone or tablet on the network can add, remove, and reorder songs
+- **Remote control** — Phones or tablets can add, remove, skip, and reorder songs
 - **YouTube support** — Auto-plays YouTube videos with full API control and auto-advance
-- **Multi-format** — Also supports Bilibili embeds, direct MP4/MP3 files, and generic iframes
-- **Real-time sync** — Firebase Realtime Database keeps all devices in sync instantly
+- **Bilibili support** — Accepts Bilibili URLs plus bare BV/AV IDs, with title auto-fetching for BV videos
+- **Multi-format** — Also supports direct MP4/MP3 files and generic iframes
+- **Real-time sync** — PeerJS/WebRTC keeps remotes synced with the display; BroadcastChannel is used as same-browser fallback
 - **Multi-language** — English, Simplified Chinese (简体中文), Traditional Chinese (繁體中文)
-- **Volume control** — Adjustable from any remote device
+- **URL cleanup** — Normalizes supported links and removes common tracking parameters such as `spm_id_from`
+- **Volume control** — Adjustable from remote devices for YouTube, video, and audio playback
 - **Drag to reorder** — Drag songs in the queue to change their order
 - **QR code joining** — Display shows a QR code for easy phone access
-- **Zero-install** — Pure HTML/CSS/JS, hosted on GitHub Pages
+- **Zero-install** — Pure HTML/CSS/JS, hosted on GitHub Pages with CDN-loaded helper libraries
 
 ---
 
 ## Setup
 
-### 1. Fork and deploy to GitHub Pages
+### Fork and deploy to GitHub Pages
 
 1. Fork this repository
 2. Go to **Settings → Pages**
-3. Set Source to **Deploy from a branch → main → / (root)**
+3. Set Source to **Deploy from a branch → master (or main) → / (root)**
 4. Your site will be at `https://YOUR_USERNAME.github.io/touchOK/`
 
-### 2. Configure Firebase (required for cross-device sync)
+No database setup is required. The display page is the source of truth, stores room state in `localStorage`, and accepts remote commands over PeerJS/WebRTC. If PeerJS is unavailable, the app falls back to BroadcastChannel for same-browser tab testing.
 
-Without Firebase, the app runs in **Demo Mode** (same-device only via BroadcastChannel).
-
-To enable cross-device sync:
-
-1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Click **Add project** and follow the setup wizard
-3. In the left menu, go to **Build → Realtime Database → Create Database**
-4. Choose your region, start in **Test mode** (you can add security rules later)
-5. In **Project Settings → Your apps**, click the **</>** (Web) icon and register an app
-6. Copy the `firebaseConfig` object values
-7. Edit **`js/config.js`** in your fork and replace the placeholder values:
-
-```js
-const FIREBASE_CONFIG = {
-  apiKey:            "AIza...",
-  authDomain:        "your-project.firebaseapp.com",
-  databaseURL:       "https://your-project-default-rtdb.firebaseio.com",
-  projectId:         "your-project",
-  storageBucket:     "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId:             "1:123:web:abc123"
-};
-```
-
-8. Commit and push — GitHub Pages will redeploy automatically.
-
-### 3. (Optional) Firebase security rules
-
-For a private venue, restrict access by adding these rules in the Firebase Console under **Realtime Database → Rules**:
-
-```json
-{
-  "rules": {
-    "rooms": {
-      "$roomId": {
-        ".read": true,
-        ".write": true,
-        "playlist": {
-          "$itemId": {
-            ".validate": "newData.hasChildren(['url','type','title','order'])"
-          }
-        }
-      }
-    }
-  }
-}
-```
+Optional settings such as default volume, max queue length, languages, and PeerJS room prefix live in `js/config.js`.
 
 ---
 
@@ -97,19 +53,27 @@ For a private venue, restrict access by adding these rules in the Firebase Conso
 |------|---------|
 | YouTube | `https://youtube.com/watch?v=...` or `https://youtu.be/...` |
 | YouTube Shorts | `https://youtube.com/shorts/...` |
-| Bilibili | `https://bilibili.com/video/BVxxx` |
-| Direct video | `https://example.com/song.mp4` |
-| Direct audio | `https://example.com/song.mp3` |
+| Bilibili | `https://www.bilibili.com/video/BVxxx` or `https://www.bilibili.com/video/av123` |
+| Bare Bilibili ID | `BV1xx411c7mD` or `av170001` |
+| Direct video | `https://example.com/song.mp4`, `.webm`, `.ogv`, `.mov`, `.m4v`, `.mkv` |
+| Direct audio | `https://example.com/song.mp3`, `.ogg`, `.wav`, `.flac`, `.aac`, `.m4a`, `.opus` |
 | Generic iframe | Any other URL (limited auto-advance) |
+
+If no title is entered, KaraokeQ tries to fetch titles for YouTube and Bilibili BV links automatically.
+
+### Playback controls
+
+- Remote play/pause and volume control work for YouTube, direct video, and direct audio.
+- Bilibili and generic iframe playback use the embedded player's own controls.
+- When Bilibili or iframe content is active, the display shows a compact management bar with queue, QR, original page, and Bilibili danmaku toggle actions.
+- Remote **Skip** always removes the current song and advances the queue.
 
 ### Keyboard shortcuts (on display device)
 
 | Key | Action |
 |-----|--------|
-| `Space` | Play / Pause |
-| `→` | Skip to next song |
-| `↑` / `↓` | Volume up / down |
 | `Q` | Toggle queue panel |
+| `D` | Toggle Bilibili danmaku |
 
 ---
 
@@ -133,10 +97,10 @@ touchOK/
 ├── css/
 │   └── style.css       # All styles (dark neon theme)
 ├── js/
-│   ├── config.js       # Firebase config ← edit this
+│   ├── config.js       # App settings
 │   ├── i18n.js         # Internationalization module
-│   ├── utils.js        # Shared utilities
-│   ├── db.js           # Firebase / BroadcastChannel abstraction
+│   ├── utils.js        # Shared URL, title, QR, and utility helpers
+│   ├── db.js           # localStorage + PeerJS/BroadcastChannel sync layer
 │   ├── player-page.js  # Display page logic
 │   └── remote-page.js  # Remote control logic
 └── locales/
@@ -152,8 +116,8 @@ touchOK/
 - Chrome 80+ / Edge 80+
 - Firefox 75+
 - Safari 14+ (iOS 14+)
-- BroadcastChannel requires same browser on same device (demo mode only)
-- Firebase mode works across all devices on any network
+- WebRTC/PeerJS is required for cross-device remote control
+- BroadcastChannel fallback only syncs tabs in the same browser profile
 
 ---
 
