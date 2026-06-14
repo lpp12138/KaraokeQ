@@ -9,7 +9,7 @@ A modern, cross-device karaoke song-request system built for GitHub Pages.
 - **YouTube support** — Auto-plays YouTube videos with full API control and auto-advance
 - **Multi-format** — Also supports Bilibili embeds, direct MP4/MP3 files, and generic iframes
 - **Real-time sync** — Firebase Realtime Database keeps all devices in sync instantly
-- **Multi-language** — English, Simplified Chinese (简体中文), Traditional Chinese (繁體中文)
+- **Multi-language** — English, Simplified Chinese (简体中文), Traditional Chinese (繁體中文), Japanese (日本語), Korean (한국어), Spanish (Español), French (Français), German (Deutsch)
 - **Volume control** — Adjustable from any remote device
 - **Drag to reorder** — Drag songs in the queue to change their order
 - **QR code joining** — Display shows a QR code for easy phone access
@@ -140,9 +140,14 @@ touchOK/
 │   ├── player-page.js  # Display page logic
 │   └── remote-page.js  # Remote control logic
 └── locales/
+    ├── de.json         # German strings
     ├── en.json         # English strings
-    ├── zh-CN.json      # Simplified Chinese
-    └── zh-TW.json      # Traditional Chinese
+    ├── es.json         # Spanish strings
+    ├── fr.json         # French strings
+    ├── ja.json         # Japanese strings
+    ├── ko.json         # Korean strings
+    ├── zh-CN.json      # Simplified Chinese strings
+    └── zh-TW.json      # Traditional Chinese strings
 ```
 
 ---

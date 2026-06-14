@@ -14,7 +14,7 @@ const APP_SETTINGS = {
   maxQueueLength: 50,
 
   // Supported languages
-  languages: ["zh-CN", "zh-TW", "en"],
+  languages: ["zh-CN", "zh-TW", "en", "ja", "ko", "es", "fr", "de"],
 
   // Default language (falls back to browser language)
   defaultLanguage: "zh-CN",

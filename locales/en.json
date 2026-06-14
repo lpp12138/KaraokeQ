@@ -38,6 +38,7 @@
     "queue": "Queue",
     "emptyQueue": "Queue is empty — add some songs!",
     "addSong": "Add Song",
+    "songTitle": "Title",
     "urlPlaceholder": "Paste YouTube / video / audio URL…",
     "titlePlaceholder": "Song title (optional, auto-detected)",
     "urlDetected": "Detected",

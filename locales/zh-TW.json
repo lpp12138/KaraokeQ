@@ -38,6 +38,7 @@
     "queue": "播放清單",
     "emptyQueue": "清單為空，快來點歌吧！",
     "addSong": "點歌",
+    "songTitle": "標題",
     "urlPlaceholder": "貼上 YouTube / 影片 / 音訊連結…",
     "titlePlaceholder": "歌曲名稱（選填，系統自動辨識）",
     "urlDetected": "辨識為",
