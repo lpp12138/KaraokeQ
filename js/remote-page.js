@@ -293,10 +293,10 @@ const RemotePage = (() => {
   // ─── Events ───────────────────────────────────────────────────────────────────
 
   function _bindEvents() {
-    // Add song FAB
-    document.getElementById("fab-add")?.addEventListener("click", () => {
-      _addFormOpen ? _closeAddForm() : _openAddForm();
-    });
+    // Add song — FAB (mobile) + wide-screen inline button both open the same sheet
+    const _toggleAdd = () => _addFormOpen ? _closeAddForm() : _openAddForm();
+    document.getElementById("fab-add")?.addEventListener("click", _toggleAdd);
+    document.getElementById("btn-add-wide")?.addEventListener("click", _toggleAdd);
     document.getElementById("btn-close-add")?.addEventListener("click", _closeAddForm);
 
     // URL input → auto-detect type

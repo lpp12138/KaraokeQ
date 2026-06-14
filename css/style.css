@@ -1257,22 +1257,152 @@ input[type="range"]::-webkit-slider-thumb {
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   Remote page — left-column wrapper
+   Mobile: display:contents makes it transparent so children flow into
+   the body flex as if the wrapper doesn't exist (no layout change).
+   Wide screens: becomes a real flex column (left panel of grid).
+══════════════════════════════════════════════════════════════════════════ */
+.remote-left-col {
+  display: contents;
+}
+
+/* ── "now-playing-empty" base style ─────────────────────────────────────── */
+#now-playing-empty {
+  padding: .65rem 1rem;
+  font-size: .88rem;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Wide-screen add button: hidden by default, shown ≥600 px */
+#btn-add-wide {
+  display: none;
+}
+
+/* ── Volume value label ──────────────────────────────────────────────────── */
+#volume-value {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  color: var(--text2);
+  width: 3rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    Responsive
 ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Small phones ────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .landing-actions { grid-template-columns: 1fr; }
   .idle-room-code { font-size: 2.2rem; }
   .idle-logo { font-size: 3rem; }
-  #now-playing-title { font-size: 1.2rem; }
   .volume-control { flex: 0 0 130px; }
   #queue-panel { width: 100%; }
 }
 
-@media (min-width: 768px) {
-  .add-song-sheet { max-width: 540px; margin: 0 auto; border-radius: var(--radius-lg); }
+/* ── Two-column layout: wide phones (landscape), foldable inner, tablets ─── */
+/*    Triggers at 600 px — covers any phone rotated to landscape             */
+@media (min-width: 600px) {
+  .remote-page {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: auto 1fr;
+    height: 100dvh;
+    max-width: none;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  /* Header spans both columns */
+  .remote-header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  /* Left column: NP + controls + add-button + settings */
+  .remote-left-col {
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+    grid-row: 2;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+  }
+
+  /* Queue fills the right column */
+  .queue-section {
+    grid-column: 2;
+    grid-row: 2;
+    min-height: 0;
+  }
+
+  /* "Add Song" wide button: shown, pushed to bottom with margin-top: auto */
+  #btn-add-wide {
+    display: flex;
+    margin: auto 1rem .75rem;  /* margin-top:auto pushes btn + settings down */
+    flex-shrink: 0;
+  }
+
+  /* FAB hidden on wide screens */
+  #fab-add { display: none; }
+
+  /* Settings loses top-border spacing (btn-add-wide acts as separator) */
+  .settings-section {
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  /* Add-song sheet: centered modal on wide screens */
+  .add-song-sheet {
+    max-width: 520px;
+    margin: 0 auto;
+    border-radius: var(--radius-lg);
+  }
   #add-song-panel { align-items: center; }
-  #fab-add { bottom: 2rem; right: 2rem; width: 4rem; height: 4rem; font-size: 1.8rem; }
-  .remote-page { max-width: 540px; margin: 0 auto; box-shadow: var(--shadow); }
+}
+
+/* ── Compact landscape: phone rotated, outer foldable cover screen ────────── */
+/*    Wide enough for two columns but short on height                         */
+@media (min-width: 600px) and (max-height: 520px) {
+  .remote-header { padding: .45rem 1rem; }
+  .remote-app-name { font-size: .95rem; }
+  .remote-room-info { font-size: .72rem; }
+  #now-playing-section { padding: .5rem 1rem; }
+  #now-playing-empty { padding: .4rem 1rem; }
+  .np-label { font-size: .65rem; margin-bottom: .1rem; }
+  .controls-section { padding: .6rem 1rem; }
+  .transport { margin-bottom: .5rem; gap: .5rem; }
+  #btn-play-pause { width: 2.6rem; height: 2.6rem; font-size: 1.1rem; }
+  .volume-row { gap: .5rem; }
+  .volume-label { font-size: .75rem; }
+  .settings-section { padding: .6rem 1rem; }
+  #btn-add-wide { margin: auto 1rem .5rem; padding: .5rem 1rem; font-size: .88rem; }
+}
+
+/* ── Large screens: foldable fully-open, tablets, desktop ────────────────── */
+@media (min-width: 900px) {
+  .remote-page {
+    grid-template-columns: 340px 1fr;
+    max-width: 1280px;
+    margin: 0 auto;
+    box-shadow: var(--shadow);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+}
+
+/* ── Very large: desktop (centered, comfortable padding) ─────────────────── */
+@media (min-width: 1200px) {
+  .remote-page { grid-template-columns: 380px 1fr; }
+  .controls-section { padding: 1.25rem 1.5rem; }
+  .queue-header { padding: 1rem 1.5rem; }
+  .queue-item { padding: .85rem 1.5rem; }
+  .settings-section { padding: 1.25rem 1.5rem; }
+  #btn-add-wide { margin: auto 1.5rem .75rem; }
 }
 
 /* ── Utility: hidden ─────────────────────────────────────────────────────── */
