@@ -571,14 +571,11 @@ small { font-size: .8rem; color: var(--text2); }
 /* ── Player overlay controls ─────────────────────────────────────────────── */
 #overlay-controls {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.85) 0%, transparent 45%, rgba(0,0,0,.4) 100%);
+  top: 0; left: 0; right: 0;
+  background: none;
   opacity: 0;
   transition: opacity .4s;
   pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   z-index: 5;
 }
 

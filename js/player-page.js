@@ -346,8 +346,6 @@ const PlayerPage = (() => {
 
   function _bindControls() {
     // Main overlay buttons
-    document.getElementById("btn-play-pause")?.addEventListener("click", _togglePlayPause);
-    document.getElementById("btn-next")?.addEventListener("click", _skipNext);
     document.getElementById("btn-queue")?.addEventListener("click", _toggleQueuePanel);
     document.getElementById("btn-qr")?.addEventListener("click", _toggleQrPanel);
 
@@ -355,18 +353,7 @@ const PlayerPage = (() => {
     document.getElementById("btn-danmaku")?.addEventListener("click", _toggleDanmaku);
     document.getElementById("btn-native")?.addEventListener("click", _openNativeWindow);
     document.getElementById("btn-queue-iframe")?.addEventListener("click", _toggleQueuePanel);
-    document.getElementById("btn-skip-iframe")?.addEventListener("click", _skipNext);
     document.getElementById("btn-qr-iframe")?.addEventListener("click", _toggleQrPanel);
-
-    const slider = document.getElementById("volume-slider");
-    if (slider) {
-      slider.value = APP_SETTINGS.defaultVolume;
-      slider.addEventListener("input", e => {
-        const vol = parseInt(e.target.value);
-        _setVolumeAll(vol);
-        DB.setState({ volume: vol });
-      });
-    }
   }
 
   function _toggleQueuePanel() {
@@ -386,21 +373,6 @@ const PlayerPage = (() => {
       if (urlEl) urlEl.textContent = url;
     }
     p.hidden = !p.hidden;
-  }
-
-  function _togglePlayPause() {
-    if (_currentType === "bilibili" || _currentType === "iframe") return;
-    const next = _state.playerState === "playing" ? "paused" : "playing";
-    if (next === "paused") _pauseAll(); else _playAll();
-    DB.setState({ playerState: next });
-  }
-
-  function _skipNext() {
-    if (_currentSong) {
-      _cleanupCurrentPlayer();          // stop playback immediately
-      DB.removeSong(_currentSong.id);
-      _currentSong = null;
-    }
   }
 
   function _toggleDanmaku() {
@@ -443,16 +415,6 @@ const PlayerPage = (() => {
   }
 
   function _onKeyDown(e) {
-    if (e.code === "Space")      { e.preventDefault(); _togglePlayPause(); }
-    if (e.code === "ArrowRight") _skipNext();
-    if (e.code === "ArrowUp") {
-      const s = document.getElementById("volume-slider");
-      if (s && !s.disabled) { s.value = Math.min(100, +s.value + 5); s.dispatchEvent(new Event("input")); }
-    }
-    if (e.code === "ArrowDown") {
-      const s = document.getElementById("volume-slider");
-      if (s && !s.disabled) { s.value = Math.max(0, +s.value - 5); s.dispatchEvent(new Event("input")); }
-    }
     if (e.code === "KeyQ") _toggleQueuePanel();
     if (e.code === "KeyD") _toggleDanmaku();
     _showControls();
