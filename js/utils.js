@@ -120,11 +120,11 @@ const Utils = (() => {
   }
 
   // Build Bilibili embed URL
-  // opts: { danmaku: boolean (default true), autoplay: boolean (default true) }
+  // opts: { danmaku: boolean (default false), autoplay: boolean (default true) }
   function getBilibiliEmbedUrl(url, opts = {}) {
     const id = getBilibiliId(url);
     if (!id) return null;
-    const danmaku = opts.danmaku === false ? 0 : 1;
+    const danmaku = opts.danmaku === true ? 1 : 0;
     const autoplay = opts.autoplay === false ? 0 : 1;
     const base = "https://player.bilibili.com/player.html";
     const common = `&autoplay=${autoplay}&high_quality=1&danmaku=${danmaku}`;
