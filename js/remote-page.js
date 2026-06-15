@@ -9,6 +9,7 @@ const RemotePage = (() => {
   let _deviceName = "";
   let _sortable = null;
   let _addFormOpen = false;
+  let _dragging = false;
 
   // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ const RemotePage = (() => {
 
   function _onPlaylistChange(songs) {
     _playlist = songs;
-    _renderQueue();
+    if (!_dragging) _renderQueue();
     _renderNowPlaying();
   }
 
@@ -191,7 +192,9 @@ const RemotePage = (() => {
     _sortable = Sortable.create(list, {
       handle: ".queue-drag",
       animation: 150,
+      onStart: () => { _dragging = true; },
       onEnd: () => {
+        _dragging = false;
         const allItems = list.querySelectorAll("[data-id]");
         // First song (index 0 in _playlist) is "now playing" — prepend its ID
         const nowPlayingId = _playlist[0]?.id;
