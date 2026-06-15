@@ -220,6 +220,13 @@ const PlayerPage = (() => {
       frame.hidden = false;
       frame.src = embedUrl;
 
+    } else if (type === "nicovideo") {
+      const embedUrl = Utils.getNicovideoEmbedUrl(song.url);
+      if (!embedUrl) { _handleInvalidSong(); return; }
+      const frame = document.getElementById("player-iframe");
+      frame.hidden = false;
+      frame.src = embedUrl;
+
     } else {
       const frame = document.getElementById("player-iframe");
       frame.hidden = false;
@@ -294,13 +301,13 @@ const PlayerPage = (() => {
     _state = state;
 
     if (state.volume !== undefined && state.volume !== prev.volume) {
-      if (_currentType !== "bilibili" && _currentType !== "iframe") {
+      if (_currentType !== "bilibili" && _currentType !== "nicovideo" && _currentType !== "iframe") {
         _setVolumeAll(state.volume);
       }
     }
 
     if (state.playerState && state.playerState !== prev.playerState) {
-      if (_currentType !== "bilibili" && _currentType !== "iframe") {
+      if (_currentType !== "bilibili" && _currentType !== "nicovideo" && _currentType !== "iframe") {
         if (state.playerState === "paused") _pauseAll();
         else if (state.playerState === "playing") _playAll();
       }
