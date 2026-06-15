@@ -14,6 +14,9 @@ const PlayerPage = (() => {
   let _controlsTimeout = null;
   let _danmakuEnabled = true;
   let _panelOpen = false;
+  // Bilibili auto-skip: simple wall-clock timer (iframe is cross-origin — no
+  // pause/play control possible, so the video always plays regardless of remote state)
+  let _bilibiliTimer = null;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -91,6 +94,8 @@ const PlayerPage = (() => {
   // ─── Player cleanup ───────────────────────────────────────────────────────────
 
   function _cleanupCurrentPlayer() {
+    _clearBilibiliTimer();
+
     if (_ytPlayer) {
       try { _ytPlayer.stopVideo(); } catch {}
       try { _ytPlayer.destroy(); } catch {}
@@ -219,6 +224,7 @@ const PlayerPage = (() => {
       const frame = document.getElementById("player-iframe");
       frame.hidden = false;
       frame.src = embedUrl;
+      _startBilibiliTimer(song);
 
     } else {
       const frame = document.getElementById("player-iframe");
@@ -521,6 +527,29 @@ const PlayerPage = (() => {
     if (!_currentSong) return;
     const url = Utils.getNativeUrl(_currentSong);
     if (url) window.open(url, "_blank", "noopener");
+  }
+
+  // ─── Bilibili auto-skip timer ─────────────────────────────────────────────────
+
+  function _clearBilibiliTimer() {
+    if (_bilibiliTimer) { clearTimeout(_bilibiliTimer); _bilibiliTimer = null; }
+  }
+
+  async function _startBilibiliTimer(song) {
+    _clearBilibiliTimer();
+    const bvid = Utils.getBilibiliId(song.url);
+    if (!bvid || !bvid.startsWith("BV")) return;
+
+    const duration = await Utils.fetchBilibiliDuration(bvid);
+    if (!duration || duration <= 0) return;
+
+    // Add a 12-second buffer: B站 embed starts a few seconds after page load,
+    // and we want to avoid cutting off the last few seconds.
+    const delay = (duration + 12) * 1000;
+    _bilibiliTimer = setTimeout(() => {
+      _bilibiliTimer = null;
+      _onSongEnded();
+    }, delay);
   }
 
   function _handleInvalidSong() {
