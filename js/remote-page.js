@@ -124,8 +124,8 @@ const RemotePage = (() => {
         item = _createQueueItem(song, i + 1);
       } else {
         // Update position number
-        const numEl = item.querySelector(".queue-num");
-        if (numEl) numEl.textContent = i + 2; // +2 because index 0 is "now playing"
+        const numEl = item.querySelector(".song-num");
+        if (numEl) numEl.textContent = "#" + (i + 2); // +2 because index 0 is "now playing"
       }
       fragment.appendChild(item);
     });
@@ -137,27 +137,69 @@ const RemotePage = (() => {
 
   function _createQueueItem(song, pos) {
     const li = document.createElement("li");
-    li.className = "queue-item";
+    li.className = "song-card";
     li.dataset.id = song.id;
-    li.innerHTML = `
-      <span class="queue-drag" title="${I18n.t("remote.dragToReorder")}">⠿</span>
-      <span class="queue-num">${pos}</span>
-      <div class="queue-info">
-        <span class="queue-title">${_esc(song.title || song.url)}</span>
-        ${song.addedBy ? `<span class="queue-by">${_esc(song.addedBy)}</span>` : ""}
-      </div>
-      <span class="queue-type badge badge--${song.type}">${I18n.t(`remote.${song.type}`) || song.type}</span>
-      <button class="btn-icon btn-pintop" data-id="${song.id}" title="置顶">⬆</button>
-      <button class="btn-icon btn-remove" data-id="${song.id}" aria-label="${I18n.t("common.remove")}">✕</button>
-    `;
-    li.querySelector(".btn-pintop").addEventListener("click", e => {
-      e.stopPropagation();
-      _pinToTop(song.id);
-    });
-    li.querySelector(".btn-remove").addEventListener("click", e => {
-      e.stopPropagation();
-      _removeSong(song.id);
-    });
+
+    // Drag handle
+    const drag = document.createElement("span");
+    drag.className = "song-drag";
+    drag.textContent = "⠿";
+
+    // Card body: title + meta row
+    const body = document.createElement("div");
+    body.className = "song-body";
+
+    const title = document.createElement("div");
+    title.className = "song-title";
+    title.textContent = song.title || song.url;
+
+    const meta = document.createElement("div");
+    meta.className = "song-meta";
+
+    const num = document.createElement("span");
+    num.className = "song-num";
+    num.textContent = "#" + pos;
+
+    const typeBadge = document.createElement("span");
+    typeBadge.className = `badge badge--${song.type}`;
+    typeBadge.textContent = I18n.t(`remote.${song.type}`) || song.type;
+
+    meta.appendChild(num);
+    meta.appendChild(typeBadge);
+
+    if (song.addedBy) {
+      const by = document.createElement("span");
+      by.className = "song-by";
+      by.textContent = song.addedBy;
+      meta.appendChild(by);
+    }
+
+    body.appendChild(title);
+    body.appendChild(meta);
+
+    // Action buttons
+    const actions = document.createElement("div");
+    actions.className = "song-actions";
+
+    const pinBtn = document.createElement("button");
+    pinBtn.className = "btn-icon btn-pintop";
+    pinBtn.title = I18n.t("remote.pinToTop") || "置顶";
+    pinBtn.textContent = "⬆";
+    pinBtn.addEventListener("click", e => { e.stopPropagation(); _pinToTop(song.id); });
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "btn-icon btn-remove";
+    removeBtn.setAttribute("aria-label", I18n.t("common.remove") || "Remove");
+    removeBtn.textContent = "✕";
+    removeBtn.addEventListener("click", e => { e.stopPropagation(); _removeSong(song.id); });
+
+    actions.appendChild(pinBtn);
+    actions.appendChild(removeBtn);
+
+    li.appendChild(drag);
+    li.appendChild(body);
+    li.appendChild(actions);
+
     return li;
   }
 
@@ -190,7 +232,7 @@ const RemotePage = (() => {
     if (!list || typeof Sortable === "undefined") return;
     if (_sortable) _sortable.destroy();
     _sortable = Sortable.create(list, {
-      handle: ".queue-drag",
+      handle: ".song-drag",
       animation: 150,
       onStart: () => { _dragging = true; },
       onEnd: () => {
