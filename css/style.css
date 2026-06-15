@@ -1488,9 +1488,13 @@ small { font-size: .8rem; color: var(--text2); }
   .remote-header .lang-label { display: none; }
 }
 
-/* ── Wide screens (≥600 px): 2-col grid ──────────────────────────────────── */
-/*    Phone landscape, foldable, tablet, desktop                             */
-@media (min-width: 600px) {
+/* ── Wide layout: 2-col grid ─────────────────────────────────────────────── */
+/*    Triggers when:                                                          */
+/*      • Phone in landscape (≥600 px wide AND landscape orientation)        */
+/*      • Tablet / foldable / desktop (≥768 px, any orientation)             */
+/*    Portrait phones are always ≤600 px wide AND portrait, so never match.  */
+@media (min-width: 600px) and (orientation: landscape),
+       (min-width: 768px) {
   .remote-main {
     display: grid;
     grid-template-columns: 280px 1fr;
