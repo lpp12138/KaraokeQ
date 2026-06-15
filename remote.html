@@ -30,9 +30,6 @@
     <div class="remote-header-right">
       <span id="connection-status" class="status status--connecting">Connecting…</span>
       <span id="sync-badge" class="badge" style="display:none;"></span>
-      <button id="btn-queue-toggle" onclick="toggleQueuePanel()" title="点歌列表">
-        ☰ <span data-i18n="remote.queue">Queue</span> <span class="queue-count-badge" id="queue-count-header">0</span>
-      </button>
       <button class="btn-theme" id="btn-theme" onclick="handleThemeToggle()" title="切换主题"></button>
       <div id="lang-switcher"></div>
     </div>
@@ -90,17 +87,14 @@
 
   </div><!-- /.remote-left-col -->
 
-  <!-- QUEUE (right column on wide screens; overlay on mobile) -->
+  <!-- QUEUE (right column on wide screens; inline on mobile) -->
   <div class="queue-section">
     <div class="queue-header">
       <h2>
         <span data-i18n="remote.queue">Queue</span>
         <span id="queue-count" class="queue-count-badge">0</span>
       </h2>
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <small data-i18n="remote.dragToReorder" style="color:var(--text3);">Drag to reorder</small>
-        <button class="btn-icon" id="btn-queue-close" onclick="toggleQueuePanel()" title="关闭">✕</button>
-      </div>
+      <small data-i18n="remote.dragToReorder" style="color:var(--text3);">Drag to reorder</small>
     </div>
     <ul id="queue-list"></ul>
     <p id="queue-empty" hidden><span data-i18n="remote.emptyQueue">Queue is empty — add some songs!</span></p>
@@ -185,22 +179,6 @@
       renderLangSwitcher();
     }
 
-    // ── Queue panel toggle (mobile overlay) ──────────────────────────────────
-    function toggleQueuePanel() {
-      const qs = document.querySelector(".queue-section");
-      const btn = document.getElementById("btn-queue-toggle");
-      const open = qs?.classList.toggle("queue--open");
-      btn?.classList.toggle("active", open);
-      document.body.style.overflow = open ? "hidden" : "";
-    }
-
-    // Sync queue count badge in the header toggle button
-    function syncQueueCountHeader() {
-      const src = document.getElementById("queue-count");
-      const dst = document.getElementById("queue-count-header");
-      if (src && dst) dst.textContent = src.textContent;
-    }
-
     // ── Theme ────────────────────────────────────────────────────────────────
     function updateThemeBtn() {
       const btn = document.getElementById("btn-theme");
@@ -230,12 +208,6 @@
           dd.querySelector(".lang-dropdown-btn")?.setAttribute("aria-expanded", "false");
         }
       });
-      // Mirror queue count into the header toggle button
-      const queueCountEl = document.getElementById("queue-count");
-      if (queueCountEl) {
-        new MutationObserver(syncQueueCountHeader)
-          .observe(queueCountEl, { childList: true, characterData: true, subtree: true });
-      }
     });
   </script>
 </body>

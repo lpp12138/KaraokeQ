@@ -1147,30 +1147,8 @@ small { font-size: .8rem; color: var(--text2); }
   text-align: right;
 }
 
-/* ── Queue toggle button (header, mobile) ────────────────────────────────── */
-#btn-queue-toggle {
-  padding: .3rem .65rem;
-  border-radius: 99px;
-  font-size: .78rem;
-  font-weight: 600;
-  border: 1px solid var(--border);
-  color: var(--text2);
-  transition: all var(--transition);
-  display: flex;
-  align-items: center;
-  gap: .3rem;
-  white-space: nowrap;
-}
-
-#btn-queue-toggle:hover,
-#btn-queue-toggle.active {
-  background: rgba(139,92,246,.15);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Close button inside queue header — hidden by default (wide screens) */
-#btn-queue-close { display: none; }
+/* ── Pin-to-top button inside queue items ────────────────────────────────── */
+.btn-pintop:hover { color: var(--accent); background: rgba(139,92,246,.1); }
 
 /* ── Queue section ───────────────────────────────────────────────────────── */
 .queue-section {
@@ -1542,37 +1520,39 @@ small { font-size: .8rem; color: var(--text2); }
   #btn-add-wide { margin: auto 1.5rem .75rem; }
 }
 
-/* ── Mobile: queue as overlay, settings padding, queue-toggle visible ─────── */
+/* ── Mobile: queue inline between controls and add-song button ────────────── */
 @media (max-width: 599px) {
-  /* Queue section hidden by default; shown as full-screen overlay when toggled */
+  /* Queue always visible, capped height, internal scroll */
   .queue-section {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    background: var(--bg);
-    overflow: hidden;
-    flex-direction: column;
+    flex: none;
+    max-height: 35dvh;
+    order: 10;
+    border-top: 1px solid var(--border);
   }
-  .queue-section.queue--open { display: flex; z-index: 110; }
+  #queue-list { min-height: 0; }
+  .queue-header { flex-shrink: 0; }
 
-  /* Show close button in queue header */
-  #btn-queue-close { display: flex; }
+  /* "Add Song" button visible on mobile, placed after queue */
+  #btn-add-wide {
+    order: 20;
+    display: flex;
+    flex-shrink: 0;
+    margin: .75rem 1rem 0;
+  }
 
-  /* Extra bottom padding so FAB doesn't overlap the settings section */
+  /* Settings after add button, safe-area bottom clearance */
   .settings-section {
-    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    order: 30;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
+
+  /* FAB hidden — inline button replaces it */
+  #fab-add { display: none; }
 
   /* Compact remote header: tighter gaps, status dot only, hide lang label text */
   .remote-header-right { gap: .4rem; }
   #connection-status { font-size: 0; gap: 0; }
   .remote-header .lang-label { display: none; }
-}
-
-/* ── Wide: queue toggle hidden (queue always visible in grid) ─────────────── */
-@media (min-width: 600px) {
-  #btn-queue-toggle { display: none; }
 }
 
 /* ── Utility: hidden ─────────────────────────────────────────────────────── */
