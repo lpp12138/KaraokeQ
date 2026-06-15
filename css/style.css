@@ -634,6 +634,14 @@ small { font-size: .8rem; color: var(--text2); }
   animation: breathe 3s ease-in-out infinite;
 }
 
+.idle-fullscreen-hint {
+  position: absolute;
+  bottom: 1.5rem;
+  font-size: .8rem;
+  color: var(--text3);
+  letter-spacing: .05em;
+}
+
 @keyframes breathe {
   0%, 100% { opacity: .5; }
   50% { opacity: 1; }

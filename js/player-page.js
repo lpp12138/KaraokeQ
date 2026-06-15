@@ -14,6 +14,9 @@ const PlayerPage = (() => {
   let _controlsTimeout = null;
   let _danmakuEnabled = false;
   let _panelOpen = false;
+  // Bilibili auto-skip: simple wall-clock timer (iframe is cross-origin — no
+  // pause/play control possible, so the video always plays regardless of remote state)
+  let _bilibiliTimer = null;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -48,6 +51,19 @@ const PlayerPage = (() => {
     document.addEventListener("mousemove", _showFab);
     document.addEventListener("touchstart", _showFab, { passive: true });
     document.addEventListener("keydown", _onKeyDown);
+
+    // Enter fullscreen on first user interaction (browsers require a gesture)
+    const _onFirstGesture = () => {
+      _enterFullscreen();
+      const hint = document.getElementById("fullscreen-hint");
+      if (hint) hint.hidden = true;
+      document.removeEventListener("click", _onFirstGesture);
+      document.removeEventListener("touchstart", _onFirstGesture);
+      document.removeEventListener("keydown", _onFirstGesture);
+    };
+    document.addEventListener("click", _onFirstGesture);
+    document.addEventListener("touchstart", _onFirstGesture, { passive: true });
+    document.addEventListener("keydown", _onFirstGesture);
     // Close panel on click outside
     document.addEventListener("click", e => {
       if (!_panelOpen) return;
@@ -65,11 +81,21 @@ const PlayerPage = (() => {
       if (el) el.hidden = (s !== name);
     });
     if (name === "idle") _cleanupCurrentPlayer();
+    if (name === "player") _enterFullscreen();
+  }
+
+  function _enterFullscreen() {
+    if (document.fullscreenElement) return;
+    const el = document.documentElement;
+    (el.requestFullscreen?.() ?? el.webkitRequestFullscreen?.() ?? Promise.resolve())
+      .catch(() => {});
   }
 
   // ─── Player cleanup ───────────────────────────────────────────────────────────
 
   function _cleanupCurrentPlayer() {
+    _clearBilibiliTimer();
+
     if (_ytPlayer) {
       try { _ytPlayer.stopVideo(); } catch {}
       try { _ytPlayer.destroy(); } catch {}
@@ -199,6 +225,7 @@ const PlayerPage = (() => {
       const frame = document.getElementById("player-iframe");
       frame.hidden = false;
       frame.src = embedUrl;
+      _startBilibiliTimer(song);
 
     } else {
       const frame = document.getElementById("player-iframe");
@@ -501,6 +528,29 @@ const PlayerPage = (() => {
     if (!_currentSong) return;
     const url = Utils.getNativeUrl(_currentSong);
     if (url) window.open(url, "_blank", "noopener");
+  }
+
+  // ─── Bilibili auto-skip timer ─────────────────────────────────────────────────
+
+  function _clearBilibiliTimer() {
+    if (_bilibiliTimer) { clearTimeout(_bilibiliTimer); _bilibiliTimer = null; }
+  }
+
+  async function _startBilibiliTimer(song) {
+    _clearBilibiliTimer();
+    const bvid = Utils.getBilibiliId(song.url);
+    if (!bvid || !bvid.startsWith("BV")) return;
+
+    const duration = await Utils.fetchBilibiliDuration(bvid);
+    if (!duration || duration <= 0) return;
+
+    // 3-second buffer after the video ends before auto-skipping.
+    // B站 embed typically starts playing within 1-2s of iframe load.
+    const delay = (duration + 3) * 1000;
+    _bilibiliTimer = setTimeout(() => {
+      _bilibiliTimer = null;
+      _onSongEnded();
+    }, delay);
   }
 
   function _handleInvalidSong() {
