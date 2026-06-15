@@ -40,9 +40,15 @@
 | YouTube | `https://youtube.com/watch?v=...` 或 `https://youtu.be/...` |
 | YouTube Shorts | `https://youtube.com/shorts/...` |
 | Bilibili | `https://bilibili.com/video/BVxxx` |
+| NicoNico | `https://www.nicovideo.jp/watch/smXXXXXXXX` |
 | 直链视频 | `https://example.com/song.mp4` |
 | 直链音频 | `https://example.com/song.mp3` |
 | 通用 iframe | 其他任意 URL（自动续播受限） |
+
+> **⚠️ Bilibili / NicoNico 限制说明**
+> 这些视频通过嵌入式 iframe 播放，受浏览器跨域策略限制：
+> - 遥控器的**暂停 / 播放**按钮**无效**，只能在视频画面上直接操作
+> - **不支持自动切歌**，视频播完后需手动点击"跳过"
 
 ### 键盘快捷键（显示设备上）
 
@@ -61,7 +67,7 @@
 |-------------|------------------------------|
 | YouTube | ✅ 是（通过 YouTube IFrame API） |
 | HTML5 视频/音频 | ✅ 是（通过 `ended` 事件） |
-| Bilibili / iframe | ❌ 需手动跳过 |
+| Bilibili / NicoNico / iframe | ❌ 需手动跳过（跨域 iframe 限制） |
 
 ---
 
