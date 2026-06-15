@@ -346,6 +346,72 @@ small { font-size: .8rem; color: var(--text2); }
 }
 .btn-theme:hover { background: rgba(139,92,246,.15); border-color: var(--accent); }
 
+/* ── Language dropdown ────────────────────────────────────────────────────── */
+.lang-dropdown { position: relative; }
+
+.lang-dropdown-btn {
+  padding: .3rem .65rem;
+  border-radius: 99px;
+  font-size: .78rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  white-space: nowrap;
+}
+
+.lang-dropdown-btn:hover,
+.lang-dropdown.open .lang-dropdown-btn {
+  background: rgba(139,92,246,.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.lang-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + .35rem);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  list-style: none;
+  min-width: 130px;
+  z-index: 300;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px) scale(.97);
+  pointer-events: none;
+  transition: opacity .15s, transform .15s;
+}
+
+.lang-dropdown.open .lang-dropdown-menu {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+.lang-dropdown-menu li { border-top: 1px solid var(--border); }
+.lang-dropdown-menu li:first-child { border-top: none; }
+
+.lang-dropdown-menu li button {
+  width: 100%;
+  text-align: left;
+  padding: .55rem .9rem;
+  font-size: .84rem;
+  color: var(--text2);
+  transition: background var(--transition);
+}
+
+.lang-dropdown-menu li button:hover,
+.lang-dropdown-menu li button[aria-current="true"] {
+  background: rgba(139,92,246,.1);
+  color: var(--accent);
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    LANDING PAGE
 ══════════════════════════════════════════════════════════════════════════ */
@@ -1081,6 +1147,31 @@ small { font-size: .8rem; color: var(--text2); }
   text-align: right;
 }
 
+/* ── Queue toggle button (header, mobile) ────────────────────────────────── */
+#btn-queue-toggle {
+  padding: .3rem .65rem;
+  border-radius: 99px;
+  font-size: .78rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  white-space: nowrap;
+}
+
+#btn-queue-toggle:hover,
+#btn-queue-toggle.active {
+  background: rgba(139,92,246,.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Close button inside queue header — hidden by default (wide screens) */
+#btn-queue-close { display: none; }
+
 /* ── Queue section ───────────────────────────────────────────────────────── */
 .queue-section {
   flex: 1;
@@ -1170,7 +1261,7 @@ small { font-size: .8rem; color: var(--text2); }
 /* ── Add song panel / FAB ─────────────────────────────────────────────────── */
 #fab-add {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
   right: 1.5rem;
   width: 3.5rem;
   height: 3.5rem;
@@ -1449,6 +1540,34 @@ small { font-size: .8rem; color: var(--text2); }
   .queue-item { padding: .85rem 1.5rem; }
   .settings-section { padding: 1.25rem 1.5rem; }
   #btn-add-wide { margin: auto 1.5rem .75rem; }
+}
+
+/* ── Mobile: queue as overlay, settings padding, queue-toggle visible ─────── */
+@media (max-width: 599px) {
+  /* Queue section hidden by default; shown as full-screen overlay when toggled */
+  .queue-section {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: var(--bg);
+    overflow: hidden;
+    flex-direction: column;
+  }
+  .queue-section.queue--open { display: flex; }
+
+  /* Show close button in queue header */
+  #btn-queue-close { display: flex; }
+
+  /* Extra bottom padding so FAB doesn't overlap the settings section */
+  .settings-section {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Wide: queue toggle hidden (queue always visible in grid) ─────────────── */
+@media (min-width: 600px) {
+  #btn-queue-toggle { display: none; }
 }
 
 /* ── Utility: hidden ─────────────────────────────────────────────────────── */

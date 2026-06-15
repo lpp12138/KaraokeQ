@@ -145,6 +145,14 @@
       document.getElementById("room-code-input")?.addEventListener("keydown", e => {
         if (e.key === "Enter") joinRoom();
       });
+      // Close lang dropdown on outside click
+      document.addEventListener("click", () => {
+        const dd = document.getElementById("lang-dropdown");
+        if (dd?.classList.contains("open")) {
+          dd.classList.remove("open");
+          dd.querySelector(".lang-dropdown-btn")?.setAttribute("aria-expanded", "false");
+        }
+      });
     });
 
     function renderRecentRooms() {
@@ -165,15 +173,30 @@
       const container = document.getElementById("lang-switcher");
       if (!container) return;
       const langs = I18n.availableLanguages();
-      container.innerHTML = Object.entries(langs).map(([code, name]) => `
-        <button class="lang-btn"
-          aria-current="${I18n.currentLang() === code ? 'true' : 'false'}"
-          onclick="switchLang('${code}')">${name}</button>
-      `).join("");
+      const current = I18n.currentLang();
+      const label = langs[current] || current;
+      container.innerHTML = `
+        <div class="lang-dropdown" id="lang-dropdown">
+          <button class="lang-dropdown-btn" onclick="toggleLangDropdown(event)"
+            aria-haspopup="true" aria-expanded="false">🌐 ${label} ▾</button>
+          <ul class="lang-dropdown-menu">
+            ${Object.entries(langs).map(([code, name]) =>
+              `<li><button aria-current="${current === code}" onclick="switchLang('${code}')">${name}</button></li>`
+            ).join("")}
+          </ul>
+        </div>`;
+    }
+
+    function toggleLangDropdown(e) {
+      e.stopPropagation();
+      const dd = document.getElementById("lang-dropdown");
+      const open = dd?.classList.toggle("open");
+      dd?.querySelector(".lang-dropdown-btn")?.setAttribute("aria-expanded", open);
     }
 
     async function switchLang(lang) {
       await I18n.load(lang);
+      document.getElementById("lang-dropdown")?.classList.remove("open");
       renderLangSwitcher();
     }
 
