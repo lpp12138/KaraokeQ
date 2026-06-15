@@ -48,6 +48,19 @@ const PlayerPage = (() => {
     document.addEventListener("mousemove", _showFab);
     document.addEventListener("touchstart", _showFab, { passive: true });
     document.addEventListener("keydown", _onKeyDown);
+
+    // Enter fullscreen on first user interaction (browsers require a gesture)
+    const _onFirstGesture = () => {
+      _enterFullscreen();
+      const hint = document.getElementById("fullscreen-hint");
+      if (hint) hint.hidden = true;
+      document.removeEventListener("click", _onFirstGesture);
+      document.removeEventListener("touchstart", _onFirstGesture);
+      document.removeEventListener("keydown", _onFirstGesture);
+    };
+    document.addEventListener("click", _onFirstGesture);
+    document.addEventListener("touchstart", _onFirstGesture, { passive: true });
+    document.addEventListener("keydown", _onFirstGesture);
     // Close panel on click outside
     document.addEventListener("click", e => {
       if (!_panelOpen) return;
@@ -65,6 +78,14 @@ const PlayerPage = (() => {
       if (el) el.hidden = (s !== name);
     });
     if (name === "idle") _cleanupCurrentPlayer();
+    if (name === "player") _enterFullscreen();
+  }
+
+  function _enterFullscreen() {
+    if (document.fullscreenElement) return;
+    const el = document.documentElement;
+    (el.requestFullscreen?.() ?? el.webkitRequestFullscreen?.() ?? Promise.resolve())
+      .catch(() => {});
   }
 
   // ─── Player cleanup ───────────────────────────────────────────────────────────
