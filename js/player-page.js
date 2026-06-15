@@ -128,23 +128,6 @@ const PlayerPage = (() => {
     }
   }
 
-  // Per-platform CSS injected at dom-ready.
-  // YouTube: target the long-stable #movie_player ID to fill the viewport via CSS.
-  // Others: just a black background; fullscreen is handled by the F-key IPC path.
-  const _INJECT_CSS = {
-    youtube: `
-      html,body{margin:0!important;padding:0!important;background:#000!important}
-      ytd-masthead,#masthead-container,#secondary,#below,#related,
-      ytd-watch-next-secondary-results-renderer,#chat-container,
-      ytd-comments,#description-inner,ytd-merch-shelf-renderer
-        {display:none!important}
-      #movie_player{
-        position:fixed!important;top:0!important;left:0!important;
-        width:100vw!important;height:100vh!important;z-index:2147483646!important}
-    `,
-    _default: `html,body{margin:0!important;padding:0!important;background:#000!important}`,
-  };
-
   // Injected into the webview page: autoplay only.
   // Fullscreen is triggered by _startFKeyTrigger (trusted sendInputEvent via IPC).
   const _INJECT_JS = `
@@ -158,7 +141,6 @@ const PlayerPage = (() => {
     })();
   `;
 
-  function _getInjectCSS(type) { return _INJECT_CSS[type] || _INJECT_CSS._default; }
 
   /**
    * Poll from the renderer side until the webview has a <video> element,
@@ -227,17 +209,14 @@ const PlayerPage = (() => {
 
     wv.addEventListener("dom-ready", function onReady() {
       if (_webviewToken !== token) return;
-      wv.insertCSS(_getInjectCSS(type)).catch(() => {});
       wv.executeJavaScript(_INJECT_JS).catch(() => {});
       _startEndPoll(wv, token);
       _startFKeyTrigger(wv, token);
     });
 
-    // If the webview navigates within the same page (SPA), re-inject on each load.
-    // Bilibili uses History API navigation so the video element changes without a dom-ready event.
+    // Bilibili uses History API navigation; re-inject autoplay JS on each in-page nav.
     wv.addEventListener("did-navigate-in-page", function() {
       if (_webviewToken !== token) return;
-      wv.insertCSS(_getInjectCSS(type)).catch(() => {});
       wv.executeJavaScript(_INJECT_JS).catch(() => {});
     });
 
