@@ -12,7 +12,7 @@ const PlayerPage = (() => {
   let _ytReady = false;
   let _ytPendingLoad = null;
   let _controlsTimeout = null;
-  let _danmakuEnabled = true;
+  let _danmakuEnabled = false;
   let _panelOpen = false;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
@@ -129,7 +129,8 @@ const PlayerPage = (() => {
       videoId,
       playerVars: {
         autoplay: 1, controls: 1, disablekb: 0,
-        fs: 1, iv_load_policy: 3, modestbranding: 1, rel: 0, playsinline: 1
+        fs: 1, iv_load_policy: 3, modestbranding: 1, rel: 0, playsinline: 1,
+        vq: "hd1080"
       },
       events: {
         onReady: e => {
