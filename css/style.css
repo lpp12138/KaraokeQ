@@ -705,8 +705,9 @@ small { font-size: .8rem; color: var(--text2); }
   align-items: center;
   justify-content: center;
   z-index: 20;
-  cursor: pointer;
+  cursor: grab;
   user-select: none;
+  touch-action: none;
   transition: opacity .4s, transform .2s, background .2s;
   box-shadow: 0 4px 20px rgba(0,0,0,.5), 0 0 0 1px rgba(139,92,246,.45);
 }
@@ -984,9 +985,10 @@ small { font-size: .8rem; color: var(--text2); }
    REMOTE PAGE
 ══════════════════════════════════════════════════════════════════════════ */
 .remote-page {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--bg);
 }
 
@@ -998,8 +1000,7 @@ small { font-size: .8rem; color: var(--text2); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 50;
 }
 
@@ -1370,27 +1371,12 @@ small { font-size: .8rem; color: var(--text2); }
 ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   Remote page — left-column wrapper
-   Mobile: display:contents makes it transparent so children flow into
-   the body flex as if the wrapper doesn't exist (no layout change).
-   Wide screens: becomes a real flex column (left panel of grid).
-══════════════════════════════════════════════════════════════════════════ */
-.remote-left-col {
-  display: contents;
-}
-
-/* ── "now-playing-empty" base style ─────────────────────────────────────── */
+/* ── "now-playing-empty" ─────────────────────────────────────────────────── */
 #now-playing-empty {
   padding: .65rem 1rem;
   font-size: .88rem;
   color: var(--text3);
   border-bottom: 1px solid var(--border);
-}
-
-/* Wide-screen add button: hidden by default, shown ≥600 px */
-#btn-add-wide {
-  display: none;
 }
 
 /* ── Volume value label ──────────────────────────────────────────────────── */
@@ -1403,6 +1389,63 @@ small { font-size: .8rem; color: var(--text2); }
   flex-shrink: 0;
 }
 
+/* ── FAB (add-song) hidden: replaced by inline button ───────────────────── */
+#fab-add { display: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Remote page — main layout
+   .remote-main is a flex column on mobile and a 2-col grid on wide screens.
+══════════════════════════════════════════════════════════════════════════ */
+
+/* Main area fills remaining height below header */
+.remote-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Controls column: NP banner + transport + volume. Does not scroll. */
+.remote-controls-col {
+  flex-shrink: 0;
+}
+
+/* Queue: fills ALL remaining height; list scrolls inside */
+.queue-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+
+#queue-list {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Bottom bar: Add Song button + name input, always at the bottom */
+.remote-bottom-bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  padding: .75rem 1rem;
+  padding-bottom: calc(.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Settings inside bottom bar: remove redundant border/padding */
+.remote-bottom-bar .settings-section {
+  padding: .5rem 0 0;
+  border-top: none;
+}
+
+/* Add Song button always visible, full width */
+#btn-add-wide { display: flex; }
+
 /* ══════════════════════════════════════════════════════════════════════════
    Responsive
 ══════════════════════════════════════════════════════════════════════════ */
@@ -1412,63 +1455,52 @@ small { font-size: .8rem; color: var(--text2); }
   .landing-actions { grid-template-columns: 1fr; }
   .idle-room-code { font-size: 2.2rem; }
   .idle-logo { font-size: 3rem; }
-  .volume-control { flex: 0 0 130px; }
   #now-playing-title { font-size: .9rem; }
   #queue-panel { width: 100%; }
 }
 
-/* ── Two-column layout: wide phones (landscape), foldable inner, tablets ─── */
-/*    Triggers at 600 px — covers any phone rotated to landscape             */
+/* ── Narrow phones: compact remote header ────────────────────────────────── */
+@media (max-width: 599px) {
+  .remote-header-right { gap: .4rem; }
+  #connection-status { font-size: 0; gap: 0; }
+  .remote-header .lang-label { display: none; }
+}
+
+/* ── Wide screens (≥600 px): 2-col grid ──────────────────────────────────── */
+/*    Phone landscape, foldable, tablet, desktop                             */
 @media (min-width: 600px) {
-  .remote-page {
+  .remote-main {
     display: grid;
     grid-template-columns: 280px 1fr;
-    grid-template-rows: auto 1fr;
-    height: 100dvh;
-    max-width: none;
-    margin: 0;
+    grid-template-rows: 1fr auto;
+    min-height: 0;
     overflow: hidden;
   }
 
-  /* Header spans both columns */
-  .remote-header {
-    grid-column: 1 / -1;
+  /* Controls in left col, top row — scrolls if content is tall */
+  .remote-controls-col {
+    grid-column: 1;
     grid-row: 1;
-  }
-
-  /* Left column: NP + controls + add-button + settings */
-  .remote-left-col {
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
+  }
+
+  /* Queue fills the entire right column (both rows) */
+  .queue-section {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    border-top: none;
+    min-height: 0;
+  }
+
+  /* Bottom bar: left col, bottom row */
+  .remote-bottom-bar {
     grid-column: 1;
     grid-row: 2;
     border-right: 1px solid var(--border);
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0;
-  }
-
-  /* Queue fills the right column */
-  .queue-section {
-    grid-column: 2;
-    grid-row: 2;
-    min-height: 0;
-  }
-
-  /* "Add Song" wide button: shown, pushed to bottom with margin-top: auto */
-  #btn-add-wide {
-    display: flex;
-    margin: auto 1rem .75rem;  /* margin-top:auto pushes btn + settings down */
-    flex-shrink: 0;
-  }
-
-  /* FAB hidden on wide screens */
-  #fab-add { display: none; }
-
-  /* Settings loses top-border spacing (btn-add-wide acts as separator) */
-  .settings-section {
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
   }
 
   /* Add-song sheet: centered modal on wide screens */
@@ -1480,8 +1512,7 @@ small { font-size: .8rem; color: var(--text2); }
   #add-song-panel { align-items: center; }
 }
 
-/* ── Compact landscape: phone rotated, outer foldable cover screen ────────── */
-/*    Wide enough for two columns but short on height                         */
+/* ── Compact landscape: phone rotated, short height ─────────────────────── */
 @media (min-width: 600px) and (max-height: 520px) {
   .remote-header { padding: .45rem 1rem; }
   .remote-app-name { font-size: .95rem; }
@@ -1494,65 +1525,28 @@ small { font-size: .8rem; color: var(--text2); }
   #btn-play-pause { width: 2.6rem; height: 2.6rem; font-size: 1.1rem; }
   .volume-row { gap: .5rem; }
   .volume-label { font-size: .75rem; }
-  .settings-section { padding: .6rem 1rem; }
-  #btn-add-wide { margin: auto 1rem .5rem; padding: .5rem 1rem; font-size: .88rem; }
+  .remote-bottom-bar { padding: .5rem 1rem; }
+  #btn-add-wide { padding: .5rem 1rem; font-size: .88rem; }
 }
 
-/* ── Large screens: foldable fully-open, tablets, desktop ────────────────── */
+/* ── Tablets and desktop ─────────────────────────────────────────────────── */
 @media (min-width: 900px) {
   .remote-page {
-    grid-template-columns: 340px 1fr;
     max-width: 1280px;
     margin: 0 auto;
     box-shadow: var(--shadow);
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
   }
+  .remote-main { grid-template-columns: 340px 1fr; }
 }
 
-/* ── Very large: desktop (centered, comfortable padding) ─────────────────── */
 @media (min-width: 1200px) {
-  .remote-page { grid-template-columns: 380px 1fr; }
+  .remote-main { grid-template-columns: 380px 1fr; }
   .controls-section { padding: 1.25rem 1.5rem; }
   .queue-header { padding: 1rem 1.5rem; }
   .queue-item { padding: .85rem 1.5rem; }
-  .settings-section { padding: 1.25rem 1.5rem; }
-  #btn-add-wide { margin: auto 1.5rem .75rem; }
-}
-
-/* ── Mobile: queue inline between controls and add-song button ────────────── */
-@media (max-width: 599px) {
-  /* Queue always visible, capped height, internal scroll */
-  .queue-section {
-    flex: none;
-    max-height: 35dvh;
-    order: 10;
-    border-top: 1px solid var(--border);
-  }
-  #queue-list { min-height: 0; }
-  .queue-header { flex-shrink: 0; }
-
-  /* "Add Song" button visible on mobile, placed after queue */
-  #btn-add-wide {
-    order: 20;
-    display: flex;
-    flex-shrink: 0;
-    margin: .75rem 1rem 0;
-  }
-
-  /* Settings after add button, safe-area bottom clearance */
-  .settings-section {
-    order: 30;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* FAB hidden — inline button replaces it */
-  #fab-add { display: none; }
-
-  /* Compact remote header: tighter gaps, status dot only, hide lang label text */
-  .remote-header-right { gap: .4rem; }
-  #connection-status { font-size: 0; gap: 0; }
-  .remote-header .lang-label { display: none; }
+  .remote-bottom-bar { padding: 1.25rem 1.5rem; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ── Utility: hidden ─────────────────────────────────────────────────────── */

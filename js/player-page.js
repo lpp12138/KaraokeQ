@@ -378,10 +378,86 @@ const PlayerPage = (() => {
     }, 4000);
   }
 
+  // ─── Draggable FAB ────────────────────────────────────────────────────────────
+
+  function _makeFabDraggable() {
+    const fab = document.getElementById("fab-ctrl");
+    if (!fab) return;
+
+    // Restore saved position
+    const saved = localStorage.getItem("kq_fab_pos");
+    if (saved) {
+      try {
+        const { left, top } = JSON.parse(saved);
+        fab.style.right = "auto";
+        fab.style.bottom = "auto";
+        fab.style.left = left;
+        fab.style.top = top;
+      } catch {}
+    }
+
+    let startX, startY, startLeft, startTop, didDrag;
+
+    fab.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      fab.setPointerCapture(e.pointerId);
+      const rect = fab.getBoundingClientRect();
+      // Switch from right/bottom to left/top on first drag
+      if (fab.style.left === "") {
+        fab.style.right = "auto";
+        fab.style.bottom = "auto";
+        fab.style.left = rect.left + "px";
+        fab.style.top = rect.top + "px";
+      }
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = parseFloat(fab.style.left) || rect.left;
+      startTop = parseFloat(fab.style.top) || rect.top;
+      didDrag = false;
+      fab.style.transition = "none";
+    });
+
+    fab.addEventListener("pointermove", e => {
+      if (e.buttons === 0) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!didDrag && Math.hypot(dx, dy) < 6) return;
+      didDrag = true;
+
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const fw = fab.offsetWidth;
+      const fh = fab.offsetHeight;
+      const newLeft = Math.max(0, Math.min(W - fw, startLeft + dx));
+      const newTop  = Math.max(0, Math.min(H - fh, startTop + dy));
+      fab.style.left = newLeft + "px";
+      fab.style.top  = newTop + "px";
+    });
+
+    fab.addEventListener("pointerup", e => {
+      fab.style.transition = "";
+      if (didDrag) {
+        // Snap to nearest horizontal edge
+        const W = window.innerWidth;
+        const fw = fab.offsetWidth;
+        const cur = parseFloat(fab.style.left);
+        const snapped = cur + fw / 2 < W / 2 ? 12 : W - fw - 12;
+        fab.style.left = snapped + "px";
+        localStorage.setItem("kq_fab_pos", JSON.stringify({
+          left: fab.style.left,
+          top: fab.style.top
+        }));
+        // Suppress click that fires after pointerup
+        fab.addEventListener("click", e => e.stopImmediatePropagation(), { once: true, capture: true });
+      }
+    });
+  }
+
   // ─── Controls binding ─────────────────────────────────────────────────────────
 
   function _bindControls() {
     document.getElementById("fab-ctrl")?.addEventListener("click", _togglePanel);
+    _makeFabDraggable();
     document.getElementById("btn-queue")?.addEventListener("click", _toggleQueuePanel);
     document.getElementById("btn-qr")?.addEventListener("click", _toggleQrPanel);
     document.getElementById("btn-danmaku")?.addEventListener("click", _toggleDanmaku);
