@@ -171,19 +171,6 @@ const Utils = (() => {
     return null;
   }
 
-  // Fetch Bilibili video duration in seconds via public API (same endpoint as title)
-  async function fetchBilibiliDuration(bvid) {
-    try {
-      const res = await fetch(
-        `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(bvid)}`,
-        { referrerPolicy: "no-referrer" }
-      );
-      const data = await res.json();
-      if (data.code === 0 && data.data?.duration) return data.data.duration;
-    } catch {}
-    return null;
-  }
-
   // Generate YouTube thumbnail URL
   function getYouTubeThumbnail(videoId) {
     return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
@@ -320,7 +307,6 @@ const Utils = (() => {
     getNativeUrl,
     fetchYouTubeTitle,
     fetchBilibiliTitle,
-    fetchBilibiliDuration,
     getYouTubeThumbnail,
     uid,
     clamp,
