@@ -163,7 +163,7 @@
       c.innerHTML = `
         <div class="lang-dropdown" id="lang-dropdown">
           <button class="lang-dropdown-btn" onclick="toggleLangDropdown(event)"
-            aria-haspopup="true" aria-expanded="false">🌐 ${label} ▾</button>
+            aria-haspopup="true" aria-expanded="false">🌐<span class="lang-label"> ${label} ▾</span></button>
           <ul class="lang-dropdown-menu">
             ${Object.entries(langs).map(([code, name]) =>
               `<li><button aria-current="${current === code}" onclick="switchLang('${code}')">${name}</button></li>`
