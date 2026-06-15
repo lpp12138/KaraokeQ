@@ -1554,7 +1554,7 @@ small { font-size: .8rem; color: var(--text2); }
     overflow: hidden;
     flex-direction: column;
   }
-  .queue-section.queue--open { display: flex; }
+  .queue-section.queue--open { display: flex; z-index: 110; }
 
   /* Show close button in queue header */
   #btn-queue-close { display: flex; }
@@ -1563,6 +1563,11 @@ small { font-size: .8rem; color: var(--text2); }
   .settings-section {
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
   }
+
+  /* Compact remote header: tighter gaps, status dot only, hide lang label text */
+  .remote-header-right { gap: .4rem; }
+  #connection-status { font-size: 0; gap: 0; }
+  .remote-header .lang-label { display: none; }
 }
 
 /* ── Wide: queue toggle hidden (queue always visible in grid) ─────────────── */
