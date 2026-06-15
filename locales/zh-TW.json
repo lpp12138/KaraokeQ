@@ -1,11 +1,11 @@
 {
   "app": {
     "name": "KaraokeQ",
-    "tagline": "智慧卡拉OK點歌系統"
+    "tagline": "Ciallo~"
   },
   "landing": {
     "title": "KaraokeQ",
-    "subtitle": "智慧卡拉OK點歌系統",
+    "subtitle": "Ciallo~",
     "createRoom": "建立房間",
     "joinRoom": "加入房間",
     "enterRoomCode": "輸入房間號…",
@@ -44,7 +44,6 @@
     "urlDetected": "辨識為",
     "youtube": "YouTube",
     "bilibili": "嗶哩嗶哩",
-    "nicovideo": "ニコニコ",
     "video": "影片檔",
     "audio": "音訊檔",
     "webpage": "網頁",
@@ -62,7 +61,7 @@
     "invalidUrl": "請輸入有效的連結",
     "dragToReorder": "拖曳調整順序",
     "yourName": "您的名稱（選填）",
-    "namePlaceholder": "如：3號桌"
+    "namePlaceholder": "如：114514"
   },
   "common": {
     "play": "播放",

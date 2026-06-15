@@ -1,11 +1,11 @@
 {
   "app": {
     "name": "KaraokeQ",
-    "tagline": "智能卡拉OK点歌系统"
+    "tagline": "Ciallo~"
   },
   "landing": {
     "title": "KaraokeQ",
-    "subtitle": "智能卡拉OK点歌系统",
+    "subtitle": "Ciallo~",
     "createRoom": "创建房间",
     "joinRoom": "加入房间",
     "enterRoomCode": "输入房间号…",
@@ -62,7 +62,7 @@
     "invalidUrl": "请输入有效的链接",
     "dragToReorder": "拖动调整顺序",
     "yourName": "您的名称（可选）",
-    "namePlaceholder": "如：3号桌"
+    "namePlaceholder": "如：114514"
   },
   "common": {
     "play": "播放",
