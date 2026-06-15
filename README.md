@@ -47,8 +47,7 @@ A modern web-based karaoke song-request and queue manager that works across all 
 > **⚠️ Bilibili limitations**
 > Bilibili videos play inside a cross-origin iframe. Due to browser security policy:
 > - The remote **pause / play** button has **no effect** on Bilibili videos — use the player controls on screen
-> - Auto-skip fires approximately **3 seconds after the video ends** (estimated via the Bilibili API, not precise detection)
-> - If the API cannot return a duration (network issue or av-number URLs), auto-skip will **not** trigger — use the Skip button manually
+> - There is **no auto-skip** for Bilibili — use the Skip button manually when the video ends
 
 ### Keyboard shortcuts (on display device)
 
@@ -67,7 +66,7 @@ A modern web-based karaoke song-request and queue manager that works across all 
 |-------------|------------------------------|
 | YouTube | ✅ Yes (via YouTube IFrame API) |
 | HTML5 Video/Audio | ✅ Yes (via `ended` event) |
-| Bilibili / iframe | ❌ Manual skip required |
+| Bilibili / iframe | ❌ Manual skip required (cross-origin iframe) |
 
 ---
 
