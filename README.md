@@ -40,14 +40,15 @@ A modern web-based karaoke song-request and queue manager that works across all 
 | YouTube | `https://youtube.com/watch?v=...` or `https://youtu.be/...` |
 | YouTube Shorts | `https://youtube.com/shorts/...` |
 | Bilibili | `https://bilibili.com/video/BVxxx` |
+| NicoNico | `https://www.nicovideo.jp/watch/smXXXXXXXX` |
 | Direct video | `https://example.com/song.mp4` |
 | Direct audio | `https://example.com/song.mp3` |
 | Generic iframe | Any other URL (limited auto-advance) |
 
-> **⚠️ Bilibili limitations**
-> Bilibili videos play inside a cross-origin iframe. Due to browser security policy:
-> - The remote **pause / play** button has **no effect** on Bilibili videos — use the player controls on screen
-> - There is **no auto-skip** for Bilibili — use the Skip button manually when the video ends
+> **⚠️ Bilibili / NicoNico limitations**
+> These videos play inside a cross-origin iframe. Due to browser security policy:
+> - The remote **pause / play** button has **no effect** — use the player controls on screen
+> - There is **no auto-skip** — use the Skip button manually when the video ends
 
 ### Keyboard shortcuts (on display device)
 
@@ -66,7 +67,7 @@ A modern web-based karaoke song-request and queue manager that works across all 
 |-------------|------------------------------|
 | YouTube | ✅ Yes (via YouTube IFrame API) |
 | HTML5 Video/Audio | ✅ Yes (via `ended` event) |
-| Bilibili / iframe | ❌ Manual skip required (cross-origin iframe) |
+| Bilibili / NicoNico / iframe | ❌ Manual skip required (cross-origin iframe) |
 
 ---
 

@@ -46,6 +46,7 @@ const Utils = (() => {
       const host = u.hostname.replace(/^www\./, "");
       if (["youtube.com", "youtu.be", "youtube-nocookie.com", "m.youtube.com"].includes(host)) return "youtube";
       if (["bilibili.com", "b23.tv", "m.bilibili.com"].includes(host)) return "bilibili";
+      if (["nicovideo.jp", "sp.nicovideo.jp", "nico.ms"].includes(host)) return "nicovideo";
       const ext = u.pathname.split(".").pop().toLowerCase().split("?")[0];
       if (["mp3", "ogg", "wav", "flac", "aac", "m4a", "opus"].includes(ext)) return "audio";
       if (["mp4", "webm", "ogv", "mov", "m4v", "mkv"].includes(ext)) return "video";
@@ -79,6 +80,11 @@ const Utils = (() => {
           return `https://www.bilibili.com/video/${bvid}/${query}`;
         }
       }
+      // NicoNico: rebuild canonical watch URL
+      if (["nicovideo.jp", "sp.nicovideo.jp", "nico.ms"].includes(host)) {
+        const nid = getNicovideoId(s);
+        if (nid) return `https://www.nicovideo.jp/watch/${nid}`;
+      }
       // YouTube: rebuild canonical watch URL
       if (["youtube.com", "youtu.be", "youtube-nocookie.com", "m.youtube.com"].includes(host)) {
         const vid = getYouTubeId(s);
@@ -108,6 +114,19 @@ const Utils = (() => {
       if (m) return m[1];
     }
     return null;
+  }
+
+  // Extract NicoNico video ID (sm/nm/so + digits)
+  function getNicovideoId(url) {
+    const m = url.match(/(?:watch\/|nico\.ms\/)((?:sm|nm|so)\d+)/i);
+    return m ? m[1] : null;
+  }
+
+  // Build NicoNico embed URL
+  function getNicovideoEmbedUrl(url) {
+    const id = getNicovideoId(url);
+    if (!id) return null;
+    return `https://embed.nicovideo.jp/watch/${id}?persistence_enabled=0&autoplay=1`;
   }
 
   // Extract Bilibili video ID (BVxxx or avxxx)
@@ -143,6 +162,10 @@ const Utils = (() => {
     if (song.type === "bilibili") {
       const id = getBilibiliId(song.url);
       return id ? `https://www.bilibili.com/video/${id}` : song.url;
+    }
+    if (song.type === "nicovideo") {
+      const id = getNicovideoId(song.url);
+      return id ? `https://www.nicovideo.jp/watch/${id}` : song.url;
     }
     return song.url;
   }
@@ -304,6 +327,8 @@ const Utils = (() => {
     getYouTubeId,
     getBilibiliId,
     getBilibiliEmbedUrl,
+    getNicovideoId,
+    getNicovideoEmbedUrl,
     getNativeUrl,
     fetchYouTubeTitle,
     fetchBilibiliTitle,
