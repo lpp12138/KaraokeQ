@@ -543,9 +543,9 @@ const PlayerPage = (() => {
     const duration = await Utils.fetchBilibiliDuration(bvid);
     if (!duration || duration <= 0) return;
 
-    // Add a 12-second buffer: B站 embed starts a few seconds after page load,
-    // and we want to avoid cutting off the last few seconds.
-    const delay = (duration + 12) * 1000;
+    // 3-second buffer after the video ends before auto-skipping.
+    // B站 embed typically starts playing within 1-2s of iframe load.
+    const delay = (duration + 3) * 1000;
     _bilibiliTimer = setTimeout(() => {
       _bilibiliTimer = null;
       _onSongEnded();
