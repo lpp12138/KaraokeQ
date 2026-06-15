@@ -146,8 +146,13 @@ const RemotePage = (() => {
         ${song.addedBy ? `<span class="queue-by">${_esc(song.addedBy)}</span>` : ""}
       </div>
       <span class="queue-type badge badge--${song.type}">${I18n.t(`remote.${song.type}`) || song.type}</span>
+      <button class="btn-icon btn-pintop" data-id="${song.id}" title="置顶">⬆</button>
       <button class="btn-icon btn-remove" data-id="${song.id}" aria-label="${I18n.t("common.remove")}">✕</button>
     `;
+    li.querySelector(".btn-pintop").addEventListener("click", e => {
+      e.stopPropagation();
+      _pinToTop(song.id);
+    });
     li.querySelector(".btn-remove").addEventListener("click", e => {
       e.stopPropagation();
       _removeSong(song.id);
@@ -170,6 +175,13 @@ const RemotePage = (() => {
     DB.removeSong(id)
       .then(() => Utils.toast(I18n.t("remote.songRemoved"), "info"))
       .catch(() => Utils.toast(I18n.t("common.error"), "error"));
+  }
+
+  function _pinToTop(id) {
+    const nowPlayingId = _playlist[0]?.id;
+    const rest = _playlist.filter(s => s.id !== nowPlayingId && s.id !== id).map(s => s.id);
+    const newOrder = [nowPlayingId, id, ...rest].filter(Boolean);
+    DB.reorderPlaylist(newOrder).catch(() => Utils.toast(I18n.t("common.error"), "error"));
   }
 
   function _initSortable() {
