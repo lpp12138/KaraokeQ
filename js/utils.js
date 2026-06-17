@@ -219,14 +219,11 @@ const Utils = (() => {
   }
 
   // Save/load recent rooms from localStorage
-  const _RECENT_ROOM_TTL = 8 * 60 * 60 * 1000; // 8 hours
-
   function saveRecentRoom(roomCode, title = "", role = "remote") {
     try {
       const key = "kq_recent_rooms";
-      const cutoff = Date.now() - _RECENT_ROOM_TTL;
       const rooms = JSON.parse(localStorage.getItem(key) || "[]");
-      const filtered = rooms.filter(r => r.code !== roomCode && r.ts > cutoff);
+      const filtered = rooms.filter(r => r.code !== roomCode);
       filtered.unshift({ code: roomCode, title, ts: Date.now(), role });
       localStorage.setItem(key, JSON.stringify(filtered.slice(0, 5)));
     } catch {}
@@ -234,20 +231,10 @@ const Utils = (() => {
 
   function getRecentRooms() {
     try {
-      const cutoff = Date.now() - _RECENT_ROOM_TTL;
-      return JSON.parse(localStorage.getItem("kq_recent_rooms") || "[]")
-        .filter(r => r.ts > cutoff);
+      return JSON.parse(localStorage.getItem("kq_recent_rooms") || "[]");
     } catch {
       return [];
     }
-  }
-
-  function deleteRecentRoom(roomCode) {
-    try {
-      const key = "kq_recent_rooms";
-      const rooms = JSON.parse(localStorage.getItem(key) || "[]");
-      localStorage.setItem(key, JSON.stringify(rooms.filter(r => r.code !== roomCode)));
-    } catch {}
   }
 
   // Copy text to clipboard, with fallback
@@ -352,7 +339,6 @@ const Utils = (() => {
     formatTime,
     saveRecentRoom,
     getRecentRooms,
-    deleteRecentRoom,
     copyToClipboard,
     toast,
     renderQRCode,

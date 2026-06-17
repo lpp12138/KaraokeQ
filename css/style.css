@@ -541,20 +541,6 @@ small { font-size: .8rem; color: var(--text2); }
   color: var(--accent);
 }
 
-.recent-room-item__delete {
-  background: none;
-  border: none;
-  color: var(--text3);
-  cursor: pointer;
-  padding: .2rem .4rem;
-  font-size: 1rem;
-  line-height: 1;
-  border-radius: var(--radius-sm);
-  transition: color var(--transition);
-  flex-shrink: 0;
-}
-.recent-room-item__delete:hover { color: var(--error); }
-
 .landing-footer {
   margin-top: auto;
   padding-top: 2rem;

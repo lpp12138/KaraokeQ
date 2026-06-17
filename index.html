@@ -137,11 +137,6 @@
       window.location.href = Utils.buildURL(page, code);
     }
 
-    function deleteRecentRoom(code) {
-      Utils.deleteRecentRoom(code);
-      renderRecentRooms();
-    }
-
     // For recent room clicks — navigate based on stored role
     function openRecentRoom(code, role) {
       const page = (_isElectron || role === "display") ? "display.html" : "remote.html";
@@ -190,8 +185,7 @@
         <div class="recent-room-item" onclick="openRecentRoom('${r.code}', '${r.role || 'remote'}')" tabindex="0" role="button">
           <span class="recent-room-code">${r.code}</span>
           <span class="badge ${r.role === 'display' ? 'badge--display' : 'badge--iframe'}" style="font-size:.65rem;padding:.1rem .35rem;">${r.role === 'display' ? '🖥 主控' : '📱 遥控'}</span>
-          <small style="margin-right:auto">${new Date(r.ts).toLocaleDateString()}</small>
-          <button class="recent-room-item__delete" onclick="event.stopPropagation();deleteRecentRoom('${r.code}')" title="删除记录">×</button>
+          <small>${new Date(r.ts).toLocaleDateString()}</small>
         </div>
       `).join("");
     }
