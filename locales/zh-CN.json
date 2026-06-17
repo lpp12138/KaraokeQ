@@ -77,15 +77,5 @@
     "loading": "加载中…",
     "language": "语言",
     "volume": "音量"
-  },
-  "setup": {
-    "title": "需要配置 Firebase",
-    "desc": "本应用使用 Firebase 实现跨设备实时同步。请按以下步骤配置。",
-    "step1": "访问 console.firebase.google.com 创建项目",
-    "step2": "启用 Realtime Database（以测试模式启动）",
-    "step3": "将您的 Web 应用配置复制到 js/config.js",
-    "openConsole": "打开 Firebase 控制台",
-    "configuredManually": "我已完成配置",
-    "demoMode": "体验演示模式（仅限同一设备）"
   }
 }

@@ -77,15 +77,5 @@
     "loading": "Wird geladen…",
     "language": "Sprache",
     "volume": "Lautstärke"
-  },
-  "setup": {
-    "title": "Firebase-Einrichtung erforderlich",
-    "desc": "Diese App nutzt Firebase für Echtzeit-Synchronisierung zwischen Geräten. Folge den Schritten unten, um sie einzurichten.",
-    "step1": "Gehe zu console.firebase.google.com und erstelle ein Projekt",
-    "step2": "Aktiviere Realtime Database (im Testmodus starten)",
-    "step3": "Kopiere deine Web-App-Konfiguration in js/config.js",
-    "openConsole": "Firebase-Konsole öffnen",
-    "configuredManually": "Ich habe es konfiguriert",
-    "demoMode": "Demo-Modus testen (nur dasselbe Gerät)"
   }
 }

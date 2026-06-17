@@ -76,15 +76,5 @@
     "loading": "載入中…",
     "language": "語言",
     "volume": "音量"
-  },
-  "setup": {
-    "title": "需要設定 Firebase",
-    "desc": "本應用使用 Firebase 實現跨裝置即時同步。請依照以下步驟設定。",
-    "step1": "前往 console.firebase.google.com 建立專案",
-    "step2": "啟用 Realtime Database（以測試模式啟動）",
-    "step3": "將您的 Web 應用設定複製到 js/config.js",
-    "openConsole": "開啟 Firebase 控制台",
-    "configuredManually": "我已完成設定",
-    "demoMode": "體驗示範模式（僅限同一裝置）"
   }
 }

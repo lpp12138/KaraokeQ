@@ -77,15 +77,5 @@
     "loading": "불러오는 중…",
     "language": "언어",
     "volume": "볼륨"
-  },
-  "setup": {
-    "title": "Firebase 설정 필요",
-    "desc": "이 앱은 기기 간 실시간 동기화를 위해 Firebase를 사용합니다. 아래 단계를 따라 설정하세요.",
-    "step1": "console.firebase.google.com 에서 프로젝트 만들기",
-    "step2": "Realtime Database 활성화(테스트 모드로 시작)",
-    "step3": "웹 앱 설정을 js/config.js 에 복사",
-    "openConsole": "Firebase 콘솔 열기",
-    "configuredManually": "설정을 완료했습니다",
-    "demoMode": "데모 모드 사용해 보기(같은 기기만)"
   }
 }

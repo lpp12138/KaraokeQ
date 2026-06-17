@@ -77,15 +77,5 @@
     "loading": "Chargement…",
     "language": "Langue",
     "volume": "Volume"
-  },
-  "setup": {
-    "title": "Configuration Firebase requise",
-    "desc": "Cette app utilise Firebase pour la synchronisation en temps réel entre appareils. Suivez les étapes ci-dessous pour la configurer.",
-    "step1": "Allez sur console.firebase.google.com et créez un projet",
-    "step2": "Activez Realtime Database (commencez en mode test)",
-    "step3": "Copiez la configuration de votre app web dans js/config.js",
-    "openConsole": "Ouvrir la console Firebase",
-    "configuredManually": "Je l'ai configuré",
-    "demoMode": "Essayer le mode démo (même appareil uniquement)"
   }
 }

@@ -77,15 +77,5 @@
     "loading": "Loading…",
     "language": "Language",
     "volume": "Volume"
-  },
-  "setup": {
-    "title": "Firebase Setup Required",
-    "desc": "This app uses Firebase for real-time sync across devices. Please follow the steps below to configure it.",
-    "step1": "Go to console.firebase.google.com and create a project",
-    "step2": "Enable Realtime Database (start in test mode)",
-    "step3": "Copy your web app config into js/config.js",
-    "openConsole": "Open Firebase Console",
-    "configuredManually": "I've configured it",
-    "demoMode": "Try Demo Mode (same device only)"
   }
 }

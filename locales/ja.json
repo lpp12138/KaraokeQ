@@ -1,11 +1,11 @@
 {
   "app": {
     "name": "KaraokeQ",
-    "tagline": "スマートカラオケ予約システム"
+    "tagline": "カラオケ予約システム"
   },
   "landing": {
     "title": "KaraokeQ",
-    "subtitle": "スマートカラオケ予約マネージャー",
+    "subtitle": "カラオケ予約マネージャー",
     "createRoom": "ルームを作成",
     "joinRoom": "ルームに参加",
     "enterRoomCode": "ルームコードを入力…",
@@ -22,21 +22,21 @@
     "scanToJoin": "スキャンして曲を追加",
     "nowPlaying": "再生中",
     "upNext": "次の曲",
-    "emptyQueue": "キューは空です",
+    "emptyQueue": "予約リストは空いています",
     "waitingForSongs": "曲の追加を待っています…",
     "addSongsHint": "QRコードをスキャンするかURLにアクセスして曲をリクエスト",
     "loading": "読み込み中…",
-    "queue": "キュー",
+    "queue": "予約リスト",
     "by": "追加者",
-    "noMoreSongs": "キューに曲がありません",
+    "noMoreSongs": "予約リストに曲がありません",
     "songEnded": "曲が終了しました。次を読み込み中…"
   },
   "remote": {
     "connectedTo": "ルーム",
     "nowPlaying": "再生中",
     "nothingPlaying": "まだ再生されていません",
-    "queue": "キュー",
-    "emptyQueue": "キューは空です。曲を追加しましょう！",
+    "queue": "予約リスト",
+    "emptyQueue": "予約リストは空です。曲を追加しましょう！",
     "addSong": "曲を追加",
     "songTitle": "タイトル",
     "urlPlaceholder": "YouTube / 動画 / 音声URLを貼り付け…",
@@ -49,7 +49,7 @@
     "audio": "音声ファイル",
     "webpage": "ウェブページ",
     "unknown": "不明",
-    "addToQueue": "キューに追加",
+    "addToQueue": "予約リストに追加",
     "adding": "追加中…",
     "controls": "コントロール",
     "volume": "音量",
@@ -57,12 +57,12 @@
     "connecting": "接続中…",
     "connected": "接続済み",
     "disconnected": "切断されました",
-    "songAdded": "キューに追加しました！",
-    "songRemoved": "キューから削除しました",
+    "songAdded": "予約リストに追加しました！",
+    "songRemoved": "予約リストから削除しました",
     "invalidUrl": "有効なURLを入力してください",
     "dragToReorder": "ドラッグして並べ替え",
     "yourName": "あなたの名前（任意）",
-    "namePlaceholder": "例：テーブル3"
+    "namePlaceholder": "例：114514"
   },
   "common": {
     "play": "再生",
@@ -77,15 +77,5 @@
     "loading": "読み込み中…",
     "language": "言語",
     "volume": "音量"
-  },
-  "setup": {
-    "title": "Firebase設定が必要です",
-    "desc": "このアプリはデバイス間のリアルタイム同期にFirebaseを使用します。以下の手順で設定してください。",
-    "step1": "console.firebase.google.com にアクセスしてプロジェクトを作成",
-    "step2": "Realtime Databaseを有効化（テストモードで開始）",
-    "step3": "Webアプリ設定を js/config.js にコピー",
-    "openConsole": "Firebaseコンソールを開く",
-    "configuredManually": "設定しました",
-    "demoMode": "デモモードを試す（同じデバイスのみ）"
   }
 }
