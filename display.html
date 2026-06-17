@@ -39,7 +39,8 @@
   <!-- ═══ PLAYER SCREEN ═══ -->
   <div id="screen-player" hidden>
 
-    <!-- HTML5 media (local/direct files) -->
+    <div id="yt-container" class="sub-player" hidden></div>
+
     <video id="player-video" class="sub-player" hidden playsinline controls></video>
 
     <audio id="player-audio" hidden autoplay></audio>
@@ -51,12 +52,14 @@
       <div id="audio-title" style="font-size:1.4rem;font-weight:700;text-align:center;padding:0 2rem;"></div>
     </div>
 
-    <!--
-      Electron webview — loads the ACTUAL video page (Bilibili, YouTube, NicoNico…)
-      using the user's login session. No X-Frame-Options, no embed restrictions.
-      Created/destroyed dynamically in player-page.js; this slot is the placeholder.
-    -->
-    <div id="webview-slot" class="sub-player" hidden></div>
+    <iframe
+      id="player-iframe"
+      class="sub-player"
+      hidden
+      allow="autoplay; fullscreen; accelerometer; gyroscope"
+      allowfullscreen
+      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+    ></iframe>
 
     <!-- Single floating control button — shows queue count, auto-hides on inactivity -->
     <button id="fab-ctrl" aria-label="控制菜单" aria-expanded="false">
