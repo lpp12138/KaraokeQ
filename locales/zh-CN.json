@@ -54,6 +54,7 @@
     "controls": "播放控制",
     "volume": "音量",
     "next": "跳过当前",
+    "pinToTop": "置顶",
     "connecting": "连接中…",
     "connected": "已连接",
     "disconnected": "连接断开",
