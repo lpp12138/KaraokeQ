@@ -218,12 +218,12 @@ const Utils = (() => {
   }
 
   // Save/load recent rooms from localStorage
-  function saveRecentRoom(roomCode, title = "") {
+  function saveRecentRoom(roomCode, title = "", role = "remote") {
     try {
       const key = "kq_recent_rooms";
       const rooms = JSON.parse(localStorage.getItem(key) || "[]");
       const filtered = rooms.filter(r => r.code !== roomCode);
-      filtered.unshift({ code: roomCode, title, ts: Date.now() });
+      filtered.unshift({ code: roomCode, title, ts: Date.now(), role });
       localStorage.setItem(key, JSON.stringify(filtered.slice(0, 5)));
     } catch {}
   }

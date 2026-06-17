@@ -104,7 +104,7 @@
           ts: Date.now()
         }));
       } catch {}
-      Utils.saveRecentRoom(code);
+      Utils.saveRecentRoom(code, "", "display");
       window.location.href = Utils.buildURL("display.html", code);
     }
 
@@ -115,12 +115,18 @@
         showError(I18n.t("landing.roomNotFound"));
         return;
       }
-      joinWithCode(code);
+      Utils.saveRecentRoom(code, "", "remote");
+      window.location.href = Utils.buildURL("remote.html", code);
     }
 
     function joinWithCode(code) {
-      Utils.saveRecentRoom(code);
       window.location.href = Utils.buildURL("remote.html", code);
+    }
+
+    // For recent room clicks — navigate based on stored role
+    function openRecentRoom(code, role) {
+      const page = role === "display" ? "display.html" : "remote.html";
+      window.location.href = Utils.buildURL(page, code);
     }
 
     function showJoinForm() {
@@ -162,8 +168,9 @@
       if (!rooms.length) { section.hidden = true; return; }
       section.hidden = false;
       list.innerHTML = rooms.map(r => `
-        <div class="recent-room-item" onclick="joinWithCode('${r.code}')" tabindex="0" role="button">
+        <div class="recent-room-item" onclick="openRecentRoom('${r.code}', '${r.role || 'remote'}')" tabindex="0" role="button">
           <span class="recent-room-code">${r.code}</span>
+          <span class="badge ${r.role === 'display' ? 'badge--display' : 'badge--iframe'}" style="font-size:.65rem;padding:.1rem .35rem;">${r.role === 'display' ? '🖥 主控' : '📱 遥控'}</span>
           <small>${new Date(r.ts).toLocaleDateString()}</small>
         </div>
       `).join("");

@@ -34,12 +34,16 @@ const PlayerPage = (() => {
     _showScreen("idle");
 
     await DB.init(roomCode, "display");
-    if (DB.mode === "broadcast") {
+    if (DB.conflict) {
+      const ind = document.getElementById("mode-indicator");
+      if (ind) { ind.textContent = "⚠️ 房间冲突"; ind.title = "该房间码已被另一台主控设备占用，当前以单机模式运行"; ind.style.display = ""; }
+      Utils.toast("⚠️ 该房间码已被另一台主控设备占用，请确认是否有重复启动", "warn", 8000);
+    } else if (DB.mode === "broadcast") {
       const ind = document.getElementById("mode-indicator");
       if (ind) { ind.textContent = "⚡ 单机模式"; ind.title = "PeerJS 不可用，仅同浏览器标签同步"; }
     }
 
-    Utils.saveRecentRoom(roomCode);
+    Utils.saveRecentRoom(roomCode, "", "display");
     DB.onPlaylistChange(_onPlaylistChange);
     DB.onStateChange(_onStateChange);
 
