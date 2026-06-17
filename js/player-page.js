@@ -14,6 +14,7 @@ const PlayerPage = (() => {
   let _controlsTimeout = null;
   let _danmakuEnabled = false;
   let _panelOpen = false;
+  let _nicoMsgHandler = null;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -111,10 +112,39 @@ const PlayerPage = (() => {
     const audioBg = document.getElementById("audio-bg");
     if (audioBg) audioBg.hidden = true;
 
+    _teardownNicoAutoplay();
     _recreateIframe();
 
     _currentType = null;
     _updateControlsForType(null);
+  }
+
+  // ─── NicoNico autoplay (postMessage jsapi) ─────────────────────────────────────
+  // The Nico embed won't autoplay-with-sound on its own (browser policy), so we
+  // wait for its `loadComplete` event then send a `play` command. Works because
+  // the iframe carries the allow="autoplay" permission policy.
+
+  function _setupNicoAutoplay(frame) {
+    _teardownNicoAutoplay();
+    _nicoMsgHandler = e => {
+      if (e.origin !== "https://embed.nicovideo.jp") return;
+      const d = e.data;
+      if (d && d.eventName === "loadComplete") {
+        frame.contentWindow?.postMessage({
+          sourceConnectorType: 1,
+          playerId: String(d.playerId ?? "1"),
+          eventName: "play"
+        }, "https://embed.nicovideo.jp");
+      }
+    };
+    window.addEventListener("message", _nicoMsgHandler);
+  }
+
+  function _teardownNicoAutoplay() {
+    if (_nicoMsgHandler) {
+      window.removeEventListener("message", _nicoMsgHandler);
+      _nicoMsgHandler = null;
+    }
   }
 
   function _recreateIframe() {
@@ -230,6 +260,7 @@ const PlayerPage = (() => {
       if (!embedUrl) { _handleInvalidSong(); return; }
       const frame = document.getElementById("player-iframe");
       frame.hidden = false;
+      _setupNicoAutoplay(frame);
       frame.src = embedUrl;
 
     } else {

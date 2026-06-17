@@ -123,10 +123,12 @@ const Utils = (() => {
   }
 
   // Build NicoNico embed URL
+  // jsapi=1 enables the postMessage control API so the player page can trigger
+  // playback after load (browsers block bare cross-origin autoplay-with-sound).
   function getNicovideoEmbedUrl(url) {
     const id = getNicovideoId(url);
     if (!id) return null;
-    return `https://embed.nicovideo.jp/watch/${id}?persistence_enabled=0&autoplay=1`;
+    return `https://embed.nicovideo.jp/watch/${id}?jsapi=1&playerId=1&persistence_enabled=0&autoplay=1`;
   }
 
   // Extract Bilibili video ID (BVxxx or avxxx)
