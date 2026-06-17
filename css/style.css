@@ -251,7 +251,6 @@ small { font-size: .8rem; color: var(--text2); }
 .badge--audio    { background: rgba(139,92,246,.15); color: var(--accent); border: 1px solid rgba(139,92,246,.3); }
 .badge--iframe   { background: rgba(245,158,11,.15); color: var(--warn); border: 1px solid rgba(245,158,11,.3); }
 .badge--demo     { background: rgba(245,158,11,.15); color: var(--warn); border: 1px solid rgba(245,158,11,.3); }
-.badge--display  { background: rgba(139,92,246,.15);  color: var(--accent); border: 1px solid rgba(139,92,246,.3); }
 
 /* ── Status indicator ─────────────────────────────────────────────────────── */
 .status {

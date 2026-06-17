@@ -26,7 +26,6 @@ const DB = (() => {
   let _role = null;
   let _room = null;
   let _mode = null;
-  let _conflictDetected = false;
 
   // PeerJS
   let _peer = null;
@@ -98,8 +97,8 @@ const DB = (() => {
         clearTimeout(timeout);
         console.warn('[DB] PeerJS error:', err.type, err.message);
         if (err.type === 'unavailable-id') {
-          _conflictDetected = true;
-          console.warn('[DB] Room conflict: another display is already registered for this room code');
+          // Another display is already using this room code — still ok, join as observer
+          console.info('[DB] Room already has a display; operating in read-only peer mode');
         }
         reject(err);
       });
@@ -365,7 +364,6 @@ const DB = (() => {
     get mode() { return _mode; },
     get role() { return _role; },
     get roomCode() { return _room; },
-    get conflict() { return _conflictDetected; },
     init,
     addSong,
     removeSong,

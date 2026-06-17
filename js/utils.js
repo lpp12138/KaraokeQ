@@ -30,7 +30,6 @@ const Utils = (() => {
   }
 
   function getBaseURL() {
-    if (window.__KQ_ELECTRON_BASE__) return window.__KQ_ELECTRON_BASE__;
     const { protocol, host, pathname } = window.location;
     const dir = pathname.substring(0, pathname.lastIndexOf("/") + 1);
     return `${protocol}//${host}${dir}`;
@@ -219,12 +218,12 @@ const Utils = (() => {
   }
 
   // Save/load recent rooms from localStorage
-  function saveRecentRoom(roomCode, title = "", role = "remote") {
+  function saveRecentRoom(roomCode, title = "") {
     try {
       const key = "kq_recent_rooms";
       const rooms = JSON.parse(localStorage.getItem(key) || "[]");
       const filtered = rooms.filter(r => r.code !== roomCode);
-      filtered.unshift({ code: roomCode, title, ts: Date.now(), role });
+      filtered.unshift({ code: roomCode, title, ts: Date.now() });
       localStorage.setItem(key, JSON.stringify(filtered.slice(0, 5)));
     } catch {}
   }

@@ -1,13 +1,5 @@
 /**
  * Display / Player page logic
- *
- * For web-based content (YouTube, Bilibili, NicoNico, generic URLs) we open the
- * ACTUAL webpage inside an Electron <webview> element instead of an embed/iframe.
- * This bypasses X-Frame-Options and lets the user's login session handle
- * member-restricted content.  CSS + JS are injected after page load to
- * auto-play the video and collapse the page chrome so only the player is visible.
- *
- * Local files (video/audio extensions) still use HTML5 <video>/<audio>.
  */
 const PlayerPage = (() => {
 
@@ -16,12 +8,12 @@ const PlayerPage = (() => {
   let _state = {};
   let _currentSong = null;
   let _currentType = null;
+  let _ytPlayer = null;
+  let _ytReady = false;
+  let _ytPendingLoad = null;
   let _controlsTimeout = null;
+  let _danmakuEnabled = false;
   let _panelOpen = false;
-
-  // Webview state
-  let _webviewToken = 0;       // incremented on every new load; stale callbacks check this
-  let _endPollInterval = null;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -42,23 +34,22 @@ const PlayerPage = (() => {
     _showScreen("idle");
 
     await DB.init(roomCode, "display");
-    if (DB.conflict) {
-      const ind = document.getElementById("mode-indicator");
-      if (ind) { ind.textContent = "⚠️ 房间冲突"; ind.title = "该房间码已被另一台主控设备占用，当前以单机模式运行"; ind.style.display = ""; }
-      Utils.toast("⚠️ 该房间码已被另一台主控设备占用，请确认是否有重复启动", "warn", 8000);
-    } else if (DB.mode === "broadcast") {
+    if (DB.mode === "broadcast") {
       const ind = document.getElementById("mode-indicator");
       if (ind) { ind.textContent = "⚡ 单机模式"; ind.title = "PeerJS 不可用，仅同浏览器标签同步"; }
     }
 
-    Utils.saveRecentRoom(roomCode, "", "display");
+    Utils.saveRecentRoom(roomCode);
     DB.onPlaylistChange(_onPlaylistChange);
     DB.onStateChange(_onStateChange);
+
+    _loadYouTubeAPI();
 
     document.addEventListener("mousemove", _showFab);
     document.addEventListener("touchstart", _showFab, { passive: true });
     document.addEventListener("keydown", _onKeyDown);
 
+    // Enter fullscreen on first user interaction (browsers require a gesture)
     const _onFirstGesture = () => {
       _enterFullscreen();
       const hint = document.getElementById("fullscreen-hint");
@@ -70,7 +61,7 @@ const PlayerPage = (() => {
     document.addEventListener("click", _onFirstGesture);
     document.addEventListener("touchstart", _onFirstGesture, { passive: true });
     document.addEventListener("keydown", _onFirstGesture);
-
+    // Close panel on click outside
     document.addEventListener("click", e => {
       if (!_panelOpen) return;
       const fab = document.getElementById("fab-ctrl");
@@ -97,205 +88,87 @@ const PlayerPage = (() => {
       .catch(() => {});
   }
 
-  // ─── Webview management ───────────────────────────────────────────────────────
-
-  /**
-   * Build the webview src URL for a given song type.
-   * We always open the NATIVE watch page, not an embed.
-   */
-  function _getWebviewUrl(song, type) {
-    switch (type) {
-      case "youtube": {
-        const vid = Utils.getYouTubeId(song.url);
-        return vid ? `https://www.youtube.com/watch?v=${vid}&autoplay=1` : null;
-      }
-      case "bilibili": {
-        const id = Utils.getBilibiliId(song.url);
-        if (!id) return null;
-        let base = `https://www.bilibili.com/video/${id}/`;
-        try {
-          const p = new URL(song.url).searchParams.get("p");
-          if (p && p !== "1") base += `?p=${p}`;
-        } catch {}
-        return base;
-      }
-      case "nicovideo": {
-        const id = Utils.getNicovideoId(song.url);
-        return id ? `https://www.nicovideo.jp/watch/${id}` : null;
-      }
-      default:
-        return song.url || null;
-    }
-  }
-
-  // Per-platform CSS injected at dom-ready.
-  // YouTube: target the long-stable #movie_player ID to fill the viewport via CSS.
-  // Others: just a black background; fullscreen is handled by the F-key IPC path.
-  const _INJECT_CSS = {
-    youtube: `
-      html,body{margin:0!important;padding:0!important;background:#000!important}
-      ytd-masthead,#masthead-container,#secondary,#below,#related,
-      ytd-watch-next-secondary-results-renderer,#chat-container,
-      ytd-comments,#description-inner,ytd-merch-shelf-renderer
-        {display:none!important}
-      #movie_player{
-        position:fixed!important;top:0!important;left:0!important;
-        width:100vw!important;height:100vh!important;z-index:2147483646!important}
-    `,
-    _default: `html,body{margin:0!important;padding:0!important;background:#000!important}`,
-  };
-
-  // Injected into the webview page: autoplay only.
-  // Fullscreen is triggered by _startFKeyTrigger (trusted sendInputEvent via IPC).
-  const _INJECT_JS = `
-    ;(function kqAutoPlay() {
-      var n = 0;
-      var t = setInterval(function() {
-        var v = document.querySelector('video');
-        if (v) { clearInterval(t); v.play().catch(function(){}); }
-        if (++n > 60) clearInterval(t);
-      }, 500);
-    })();
-  `;
-
-  function _getInjectCSS(type) { return _INJECT_CSS[type] || _INJECT_CSS._default; }
-
-  /**
-   * Poll from the renderer side until the webview has a <video> element,
-   * then send a trusted F-key event via the main process so Bilibili's
-   * web-fullscreen mode activates (isTrusted=true, unlike dispatchEvent).
-   */
-  function _startFKeyTrigger(wv, token) {
-    if (!window.electronAPI?.sendWebviewKey) return;
-    let n = 0;
-    const t = setInterval(async () => {
-      if (_webviewToken !== token || !wv.isConnected) { clearInterval(t); return; }
-      try {
-        const hasVideo = await wv.executeJavaScript('!!document.querySelector("video")');
-        if (hasVideo) {
-          clearInterval(t);
-          // Focus the player first so the key event reaches the player's shortcut handler.
-          setTimeout(async () => {
-            if (_webviewToken !== token || !wv.isConnected) return;
-            await wv.executeJavaScript(`
-              ;(function(){
-                var p = document.querySelector(
-                  '#movie_player, .bpx-player-container, #bilibili-player, video'
-                );
-                if (p) { p.focus(); }
-              })();
-            `).catch(() => {});
-            window.electronAPI.sendWebviewKey(wv.getWebContentsId(), 'f');
-          }, 500);
-        }
-      } catch { /* webview still loading */ }
-      if (++n > 30) clearInterval(t);
-    }, 500);
-  }
-
-  /**
-   * Create a fresh <webview> in the #webview-slot and configure it.
-   * Returns the new webview element.
-   */
-  function _makeWebview() {
-    const slot = document.getElementById("webview-slot");
-    if (!slot) return null;
-
-    // Remove any existing webview
-    const old = slot.querySelector("webview");
-    if (old) old.remove();
-
-    const wv = document.createElement("webview");
-    wv.setAttribute("partition", "persist:karaokeq");
-    wv.setAttribute("allowpopups", "");
-    wv.style.cssText = "width:100%;height:100%;border:none;display:block;";
-    slot.appendChild(wv);
-    return wv;
-  }
-
-  function _loadWebview(song, type) {
-    const url = _getWebviewUrl(song, type);
-    if (!url) { _handleInvalidSong(); return; }
-
-    const token = ++_webviewToken;
-    const slot = document.getElementById("webview-slot");
-    if (!slot) { _handleInvalidSong(); return; }
-    slot.hidden = false;
-
-    const wv = _makeWebview();
-    if (!wv) { _handleInvalidSong(); return; }
-
-    wv.addEventListener("dom-ready", function onReady() {
-      if (_webviewToken !== token) return;
-      wv.insertCSS(_getInjectCSS(type)).catch(() => {});
-      wv.executeJavaScript(_INJECT_JS).catch(() => {});
-      _startEndPoll(wv, token);
-      _startFKeyTrigger(wv, token);
-    });
-
-    // If the webview navigates within the same page (SPA), re-inject on each load.
-    // Bilibili uses History API navigation so the video element changes without a dom-ready event.
-    wv.addEventListener("did-navigate-in-page", function() {
-      if (_webviewToken !== token) return;
-      wv.insertCSS(_getInjectCSS(type)).catch(() => {});
-      wv.executeJavaScript(_INJECT_JS).catch(() => {});
-    });
-
-    wv.src = url;
-  }
-
-  /**
-   * Poll every 3 s: check if the page's <video> element has ended.
-   * When it has, advance the queue.
-   */
-  function _startEndPoll(wv, token) {
-    if (_endPollInterval) clearInterval(_endPollInterval);
-    _endPollInterval = setInterval(async () => {
-      if (_webviewToken !== token || !wv.isConnected) {
-        clearInterval(_endPollInterval);
-        _endPollInterval = null;
-        return;
-      }
-      try {
-        const ended = await wv.executeJavaScript(
-          "(function(){var v=document.querySelector('video');return v?v.ended:false;})()"
-        );
-        if (ended) {
-          clearInterval(_endPollInterval);
-          _endPollInterval = null;
-          _onSongEnded();
-        }
-      } catch {}
-    }, 3000);
-  }
-
   // ─── Player cleanup ───────────────────────────────────────────────────────────
 
   function _cleanupCurrentPlayer() {
-    // Stop end-poll and invalidate any in-flight webview
-    if (_endPollInterval) { clearInterval(_endPollInterval); _endPollInterval = null; }
-    _webviewToken++;
-
-    // Destroy webview
-    const slot = document.getElementById("webview-slot");
-    if (slot) {
-      slot.hidden = true;
-      const wv = slot.querySelector("webview");
-      if (wv) wv.remove();
+    if (_ytPlayer) {
+      try { _ytPlayer.stopVideo(); } catch {}
+      try { _ytPlayer.destroy(); } catch {}
+      _ytPlayer = null;
     }
+    const ytContainer = document.getElementById("yt-container");
+    if (ytContainer) { ytContainer.innerHTML = ""; ytContainer.hidden = true; }
 
-    // Stop video
     const vid = document.getElementById("player-video");
     if (vid) { vid.pause(); vid.removeAttribute("src"); vid.load(); vid.hidden = true; }
 
-    // Stop audio
     const aud = document.getElementById("player-audio");
     if (aud) { aud.pause(); aud.removeAttribute("src"); aud.load(); aud.hidden = true; }
     const audioBg = document.getElementById("audio-bg");
     if (audioBg) audioBg.hidden = true;
 
+    _recreateIframe();
+
     _currentType = null;
     _updateControlsForType(null);
+  }
+
+  function _recreateIframe() {
+    const old = document.getElementById("player-iframe");
+    if (!old) return;
+    const parent = old.parentNode;
+    const fresh = document.createElement("iframe");
+    fresh.id = "player-iframe";
+    fresh.className = "sub-player";
+    fresh.setAttribute("allow", "autoplay; fullscreen; accelerometer; gyroscope");
+    fresh.setAttribute("allowfullscreen", "");
+    fresh.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation allow-popups");
+    fresh.hidden = true;
+    parent.replaceChild(fresh, old);
+  }
+
+  // ─── YouTube IFrame API ───────────────────────────────────────────────────────
+
+  function _loadYouTubeAPI() {
+    window.onYouTubeIframeAPIReady = () => {
+      _ytReady = true;
+      if (_ytPendingLoad) { _loadYouTube(_ytPendingLoad); _ytPendingLoad = null; }
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  }
+
+  function _loadYouTube(videoId) {
+    if (!_ytReady) { _ytPendingLoad = videoId; return; }
+    const container = document.getElementById("yt-container");
+    if (!container) return;
+    container.innerHTML = '<div id="yt-player"></div>';
+    container.hidden = false;
+
+    _ytPlayer = new YT.Player("yt-player", {
+      videoId,
+      playerVars: {
+        autoplay: 1, controls: 1, disablekb: 0,
+        fs: 1, iv_load_policy: 3, modestbranding: 1, rel: 0, playsinline: 1,
+        vq: "hd1080"
+      },
+      events: {
+        onReady: e => {
+          e.target.setVolume(_state.volume ?? APP_SETTINGS.defaultVolume);
+          e.target.playVideo();
+          DB.setState({ playerState: "playing" });
+        },
+        onStateChange: e => {
+          if (e.data === YT.PlayerState.ENDED) _onSongEnded();
+          if (e.data === YT.PlayerState.PLAYING) DB.setState({ playerState: "playing" });
+        },
+        onError: () => {
+          Utils.toast("视频加载失败，跳过", "error");
+          setTimeout(_onSongEnded, 2000);
+        }
+      }
+    });
   }
 
   // ─── Song loading ─────────────────────────────────────────────────────────────
@@ -304,6 +177,7 @@ const PlayerPage = (() => {
     if (!song) { _showScreen("idle"); return; }
 
     _cleanupCurrentPlayer();
+
     _currentSong = song;
     _showScreen("player");
     _updateNowPlaying(song);
@@ -313,7 +187,12 @@ const PlayerPage = (() => {
     _currentType = type;
     _updateControlsForType(type);
 
-    if (type === "video") {
+    if (type === "youtube") {
+      const vid = Utils.getYouTubeId(song.url);
+      if (!vid) { _handleInvalidSong(); return; }
+      _loadYouTube(vid);
+
+    } else if (type === "video") {
       const el = document.getElementById("player-video");
       el.hidden = false;
       el.src = song.url;
@@ -335,15 +214,46 @@ const PlayerPage = (() => {
       aud.play().catch(() => {});
       aud.onended = _onSongEnded;
 
+    } else if (type === "bilibili") {
+      const embedUrl = Utils.getBilibiliEmbedUrl(song.url, { danmaku: _danmakuEnabled });
+      if (!embedUrl) { _handleInvalidSong(); return; }
+      const frame = document.getElementById("player-iframe");
+      frame.hidden = false;
+      frame.src = embedUrl;
+
+    } else if (type === "nicovideo") {
+      const embedUrl = Utils.getNicovideoEmbedUrl(song.url);
+      if (!embedUrl) { _handleInvalidSong(); return; }
+      const frame = document.getElementById("player-iframe");
+      frame.hidden = false;
+      frame.src = embedUrl;
+
     } else {
-      // youtube / bilibili / nicovideo / generic URL → open native page in webview
-      _loadWebview(song, type);
+      const frame = document.getElementById("player-iframe");
+      frame.hidden = false;
+      frame.src = song.url;
     }
 
     DB.setState({ playerState: "playing" });
   }
 
-  // ─── Playback control ─────────────────────────────────────────────────────────
+  // ─── Controls per content type ────────────────────────────────────────────────
+  // Bilibili: show danmaku + native-window buttons in panel.
+  // All types: FAB is shown when a song is loaded.
+
+  function _updateControlsForType(type) {
+    const isBilibili = type === "bilibili";
+
+    const danmakuBtn = document.getElementById("btn-danmaku");
+    if (danmakuBtn) {
+      danmakuBtn.hidden = !isBilibili;
+      danmakuBtn.textContent = _danmakuEnabled ? "弹幕 ON" : "弹幕 OFF";
+    }
+    const nativeBtn = document.getElementById("btn-native");
+    if (nativeBtn) nativeBtn.hidden = !type || type === "youtube" || type === "video" || type === "audio";
+  }
+
+  // ─── Playback ─────────────────────────────────────────────────────────────────
 
   function _onSongEnded() {
     if (!_currentSong) return;
@@ -352,45 +262,27 @@ const PlayerPage = (() => {
   }
 
   function _setVolumeAll(vol) {
+    if (_ytPlayer?.setVolume) _ytPlayer.setVolume(vol);
     const vid = document.getElementById("player-video");
-    if (vid && !vid.hidden) vid.volume = vol / 100;
+    if (vid) vid.volume = vol / 100;
     const aud = document.getElementById("player-audio");
-    if (aud && !aud.hidden) aud.volume = vol / 100;
-
-    const wv = document.querySelector("#webview-slot webview");
-    if (wv) {
-      wv.executeJavaScript(
-        `(function(){var v=document.querySelector('video');if(v)v.volume=${vol / 100};})()`
-      ).catch(() => {});
-    }
+    if (aud) aud.volume = vol / 100;
   }
 
   function _pauseAll() {
+    if (_ytPlayer?.pauseVideo) _ytPlayer.pauseVideo();
     const vid = document.getElementById("player-video");
     if (vid && !vid.hidden) vid.pause();
     const aud = document.getElementById("player-audio");
     if (aud && !aud.hidden) aud.pause();
-
-    const wv = document.querySelector("#webview-slot webview");
-    if (wv) {
-      wv.executeJavaScript(
-        "(function(){var v=document.querySelector('video');if(v)v.pause();})()"
-      ).catch(() => {});
-    }
   }
 
   function _playAll() {
+    if (_ytPlayer?.playVideo) _ytPlayer.playVideo();
     const vid = document.getElementById("player-video");
     if (vid && !vid.hidden) vid.play().catch(() => {});
     const aud = document.getElementById("player-audio");
     if (aud && !aud.hidden) aud.play().catch(() => {});
-
-    const wv = document.querySelector("#webview-slot webview");
-    if (wv) {
-      wv.executeJavaScript(
-        "(function(){var v=document.querySelector('video');if(v)v.play().catch(function(){});})()"
-      ).catch(() => {});
-    }
   }
 
   // ─── DB handlers ──────────────────────────────────────────────────────────────
@@ -410,23 +302,17 @@ const PlayerPage = (() => {
     _state = state;
 
     if (state.volume !== undefined && state.volume !== prev.volume) {
-      _setVolumeAll(state.volume);
+      if (_currentType !== "bilibili" && _currentType !== "nicovideo" && _currentType !== "iframe") {
+        _setVolumeAll(state.volume);
+      }
     }
 
     if (state.playerState && state.playerState !== prev.playerState) {
-      if (state.playerState === "paused") _pauseAll();
-      else if (state.playerState === "playing") _playAll();
+      if (_currentType !== "bilibili" && _currentType !== "nicovideo" && _currentType !== "iframe") {
+        if (state.playerState === "paused") _pauseAll();
+        else if (state.playerState === "playing") _playAll();
+      }
     }
-  }
-
-  // ─── Controls per content type ────────────────────────────────────────────────
-
-  function _updateControlsForType(type) {
-    // With native-page webview, there's no danmaku toggle or separate "open native" action
-    const danmakuBtn = document.getElementById("btn-danmaku");
-    if (danmakuBtn) danmakuBtn.hidden = true;
-    const nativeBtn = document.getElementById("btn-native");
-    if (nativeBtn) nativeBtn.hidden = true;
   }
 
   // ─── UI updates ───────────────────────────────────────────────────────────────
@@ -449,6 +335,7 @@ const PlayerPage = (() => {
   }
 
   function _updateQueueList() {
+    // Update FAB badge (show count when panel closed, "×" when open)
     if (!_panelOpen) {
       const fabCount = document.getElementById("fab-queue-count");
       if (fabCount) fabCount.textContent = _playlist.length;
@@ -525,6 +412,7 @@ const PlayerPage = (() => {
     const fab = document.getElementById("fab-ctrl");
     if (!fab) return;
 
+    // Restore saved position
     const saved = localStorage.getItem("kq_fab_pos");
     if (saved) {
       try {
@@ -542,6 +430,7 @@ const PlayerPage = (() => {
       e.preventDefault();
       fab.setPointerCapture(e.pointerId);
       const rect = fab.getBoundingClientRect();
+      // Switch from right/bottom to left/top on first drag
       if (fab.style.left === "") {
         fab.style.right = "auto";
         fab.style.bottom = "auto";
@@ -576,6 +465,7 @@ const PlayerPage = (() => {
     fab.addEventListener("pointerup", e => {
       fab.style.transition = "";
       if (didDrag) {
+        // Snap to nearest horizontal edge
         const W = window.innerWidth;
         const fw = fab.offsetWidth;
         const cur = parseFloat(fab.style.left);
@@ -585,6 +475,7 @@ const PlayerPage = (() => {
           left: fab.style.left,
           top: fab.style.top
         }));
+        // Suppress click that fires after pointerup
         fab.addEventListener("click", e => e.stopImmediatePropagation(), { once: true, capture: true });
       }
     });
@@ -597,6 +488,8 @@ const PlayerPage = (() => {
     _makeFabDraggable();
     document.getElementById("btn-queue")?.addEventListener("click", _toggleQueuePanel);
     document.getElementById("btn-qr")?.addEventListener("click", _toggleQrPanel);
+    document.getElementById("btn-danmaku")?.addEventListener("click", _toggleDanmaku);
+    document.getElementById("btn-native")?.addEventListener("click", _openNativeWindow);
   }
 
   function _toggleQueuePanel() {
@@ -618,6 +511,26 @@ const PlayerPage = (() => {
     p.hidden = !p.hidden;
   }
 
+  function _toggleDanmaku() {
+    _danmakuEnabled = !_danmakuEnabled;
+    const btn = document.getElementById("btn-danmaku");
+    if (btn) btn.textContent = _danmakuEnabled ? "弹幕 ON" : "弹幕 OFF";
+    if (_currentSong && _currentType === "bilibili") {
+      const embedUrl = Utils.getBilibiliEmbedUrl(_currentSong.url, { danmaku: _danmakuEnabled });
+      if (embedUrl) {
+        _recreateIframe();
+        const frame = document.getElementById("player-iframe");
+        if (frame) { frame.hidden = false; frame.src = embedUrl; }
+      }
+    }
+  }
+
+  function _openNativeWindow() {
+    if (!_currentSong) return;
+    const url = Utils.getNativeUrl(_currentSong);
+    if (url) window.open(url, "_blank", "noopener");
+  }
+
   function _handleInvalidSong() {
     Utils.toast("无效链接，跳过", "error");
     setTimeout(_onSongEnded, 1500);
@@ -625,6 +538,7 @@ const PlayerPage = (() => {
 
   function _onKeyDown(e) {
     if (e.code === "KeyQ") _togglePanel();
+    if (e.code === "KeyD") _toggleDanmaku();
     _showFab();
   }
 

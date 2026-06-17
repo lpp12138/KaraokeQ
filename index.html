@@ -37,7 +37,6 @@
       <span class="action-card__label" data-i18n="landing.joinRoom">Join Room</span>
       <span class="action-card__desc" data-i18n="landing.orScanQr">or scan QR code</span>
     </button>
-    <!-- Hidden in Electron display app (no remote-join needed) -->
   </div>
 
   <!-- Join form -->
@@ -80,22 +79,12 @@
   <script src="./js/i18n.js"></script>
 
   <script>
-    // In the Electron display app, the landing page only creates/resumes rooms
-    // as the host (display.html). The remote-join flow is for browser users only.
-    const _isElectron = !!window.electronAPI;
-
     (async () => {
       await I18n.init();
       renderLangSwitcher();
       renderRecentRooms();
 
-      if (_isElectron) {
-        // Hide the "Join Room" card — the display app is always the host
-        const joinBtn = document.getElementById("btn-join-show");
-        if (joinBtn) joinBtn.hidden = true;
-      }
-
-      // If ?room= in URL, re-enter that room
+      // If ?room= in URL, go directly to remote
       const code = Utils.getRoomCodeFromURL();
       if (code) joinWithCode(code);
     })();
@@ -115,7 +104,7 @@
           ts: Date.now()
         }));
       } catch {}
-      Utils.saveRecentRoom(code, "", "display");
+      Utils.saveRecentRoom(code);
       window.location.href = Utils.buildURL("display.html", code);
     }
 
@@ -126,21 +115,12 @@
         showError(I18n.t("landing.roomNotFound"));
         return;
       }
-      Utils.saveRecentRoom(code, "", _isElectron ? "display" : "remote");
-      const page = _isElectron ? "display.html" : "remote.html";
-      window.location.href = Utils.buildURL(page, code);
+      joinWithCode(code);
     }
 
-    // For URL param redirects (e.g. QR code scans)
     function joinWithCode(code) {
-      const page = _isElectron ? "display.html" : "remote.html";
-      window.location.href = Utils.buildURL(page, code);
-    }
-
-    // For recent room clicks — navigate based on stored role
-    function openRecentRoom(code, role) {
-      const page = (_isElectron || role === "display") ? "display.html" : "remote.html";
-      window.location.href = Utils.buildURL(page, code);
+      Utils.saveRecentRoom(code);
+      window.location.href = Utils.buildURL("remote.html", code);
     }
 
     function showJoinForm() {
@@ -182,9 +162,8 @@
       if (!rooms.length) { section.hidden = true; return; }
       section.hidden = false;
       list.innerHTML = rooms.map(r => `
-        <div class="recent-room-item" onclick="openRecentRoom('${r.code}', '${r.role || 'remote'}')" tabindex="0" role="button">
+        <div class="recent-room-item" onclick="joinWithCode('${r.code}')" tabindex="0" role="button">
           <span class="recent-room-code">${r.code}</span>
-          <span class="badge ${r.role === 'display' ? 'badge--display' : 'badge--iframe'}" style="font-size:.65rem;padding:.1rem .35rem;">${r.role === 'display' ? '🖥 主控' : '📱 遥控'}</span>
           <small>${new Date(r.ts).toLocaleDateString()}</small>
         </div>
       `).join("");
